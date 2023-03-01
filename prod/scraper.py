@@ -101,3 +101,14 @@ def check_date_column(date_col: List[dt.datetime], _freq: str, printer=False) ->
     if printer:
         print("Datas faltantes:\n", missing_list)
     return missing_list
+
+def insert_missing_dates(x: pd.DataFrame, missing_dates: list, date_column_name: str):
+    y = x.reset_index()
+    missing = pd.DataFrame(missing_dates, columns=[date_column_name])
+    y = pd.concat([y, missing], ignore_index=True)
+    y.loc[:,"date"] = pd.to_datetime(y.loc[:,"date"])
+    y.set_index("date", inplace=True)
+    y.sort_index(inplace=True)
+    faltantes = check_date_column(y.index, _freq='h')
+    print("Datas faltantes após transformação:", faltantes)
+    return y
