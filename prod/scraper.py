@@ -1,5 +1,7 @@
 import pandas as pd
 import requests
+from typing import List
+import datetime as dt
 
 class ons_data:
     """Classe destinada à leitura dos dados de carga da ONS
@@ -83,3 +85,19 @@ class ons_data:
             print("Ano não disponível.")
 
 
+def check_date_column(date_col: List[dt.datetime], _freq: str, printer=False) -> List(dt.datetime):
+    """Verifica datas faltantes no intervalo.
+
+    Args:
+        date_col (List[dt.datetime]): coluna de datas.
+        _freq (str): frequência da coluna de datas.
+        printer (bool, optional): traz as datas fatantes em tela. Defaults to False.
+
+    Returns:
+        List(dt.datetime): lista de datas faltantes
+    """
+    missing_dates = pd.date_range(date_col.min(), date_col.max(), freq=_freq).difference(date_col)
+    missing_list = missing_dates.to_list()
+    if printer:
+        print("Datas faltantes:\n", missing_list)
+    return missing_list
