@@ -18,6 +18,9 @@ class ons_data:
         self.ano_inicio = ano_inicio
         self.ano_fim = ano_fim
         self.idreg = idreg
+        self.data = pd.DataFrame()
+        self.missing_dates = []
+        self.data_dt_inserted = pd.DataFrame()
         self.data_dir = "../../../data/"
 
     def read(self) -> pd.DataFrame:
@@ -33,16 +36,17 @@ class ons_data:
             path = "".join([self.data_dir,"hourly_load.csv"])
         elif self.freq == "daily":
             path = "".join([self.data_dir,"daily_load.csv"])
-        df = pd.read_csv(path)
+        df = pd.read_csv(path, sep=";", decimal=",", parse_dates=["date"])
         if not self.idreg:
             idreg = df["id_reg"].unique()
         else:
             idreg = [self.idreg]
         df = df[df["id_reg"].isin(idreg)]
         df.set_index("date", inplace=True)
+        self.data = df
         return df
 
-    def update(self, printer=False, write=False) -> pd.DataFrame:
+    def update(self, printer=False, write: bool=False) -> pd.DataFrame:
         """Função para atualizar os arquivos no diretório de dados.
 
         Args:
@@ -79,10 +83,42 @@ class ons_data:
             df.set_index("date", inplace=True)
             if write:
                 full_path = "".join([self.data_dir,f"{self.freq}_load.csv"])
-                df.to_csv(full_path)
+                df.to_csv(full_path, sep=";", decimal=",")
+            self.data = df
             return df
         else:
             print("Ano não disponível.")
+    
+    def check_date_column(self, _freq: str, printer=False) -> List[dt.datetime]:
+        """Verifica datas faltantes no intervalo
+
+        Args:
+            _freq (str): frequência da série
+            printer (bool, optional): informa as datas faltantes em tela. Defaults to False.
+
+        Returns:
+            List[dt.datetime]: lista de datas faltantes
+        """
+        date_col = self.data.reset_index()["date"]
+        missing_dates = pd.date_range(date_col.min(), date_col.max(), freq=_freq).difference(date_col)
+        missing_list = missing_dates.to_list()
+        if printer:
+            print("Datas faltantes:\n", missing_list)
+        self.missing_dates = missing_list
+        return missing_list
+    
+    def insert_missing_dates(self, printer=False):
+        y = self.data.reset_index()
+        missing = pd.DataFrame(self.missing_dates, columns=["date"])
+        y = pd.concat([y, missing], ignore_index=True)
+        y.loc[:,"date"] = pd.to_datetime(y.loc[:,"date"])
+        y.set_index("date", inplace=True)
+        y.sort_index(inplace=True)
+        faltantes = check_date_column(y.index, _freq='h')
+        if printer:
+            print("Datas faltantes após transformação:", faltantes)
+        self.data_dt_inserted = y
+        return y
 
 
 def check_date_column(date_col: List[dt.datetime], _freq: str, printer=False) -> List(dt.datetime):
