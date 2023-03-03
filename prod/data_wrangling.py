@@ -2,6 +2,7 @@ import pandas as pd
 import requests
 from typing import List
 import datetime as dt
+import matplotlib.pyplot as plt
 
 class ons_data:
     """Classe destinada à leitura dos dados de carga da ONS
@@ -140,3 +141,18 @@ class ons_data:
                 plt.axvline(x=data_faltante, color='red', linestyle='--')
             plt.title(f"Valores vazios: {n_missing}")
             plt.show()
+
+    def fill_na(self, _method: str, printer=False):
+        """Preenche valores vazios.
+
+        Args:
+            _method (str): método para preencher os valores vazios. ["linear", "nearest", "spline", "polynomial"]
+        """
+        data = self.data_dt_inserted
+        data.loc[:, "id_reg"] = data.loc[:, "id_reg"].fillna('ffill').fillna('bfill') 
+        data.loc[:, "desc_reg"] = data.loc[:, "desc_reg"].fillna('ffill').fillna('bfill')
+        data.loc[:, "load_mwmed"] = data.loc[:, "load_mwmed"].interpolate(method=_method)
+        print("Valores vazios restantes:")
+        print(data.isna().sum())
+        self.data_treated = data
+        return data
