@@ -81,6 +81,11 @@ class ons_data:
                 df2 = pd.read_csv(url.format(ano), sep = ";")
                 df = pd.concat([df, df2])
             df.columns = ["id_reg", "desc_reg", "date", "load_mwmed"]
+            if not self.idreg:
+                idreg = df["id_reg"].unique()
+            else:
+                idreg = [self.idreg]
+            df = df[df["id_reg"].isin(idreg)]
             df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"], format = date_format)
             df.sort_values(by = "date", inplace = True)
             df.set_index("date", inplace=True)
@@ -163,15 +168,24 @@ class ons_data:
             plt.show()
 
     
-def pipeline(x):
+def pipeline(x, update=False) -> pd.DataFrame:
+    """Função que aplica o tratamento de dados na classe ons_data.
+
+    Args:
+    Returns:
+        pd.DataFrame: dados ajustados
+    """
     data = x
-    data.read()
-    df0 = data.data
+    if update:
+        data.update()
+    else:
+        data.read()
+    #df0 = data.data
     data.check_date_column(printer=False)
     data.correct_dates(printer=False)
     #data.get_data_description(plot=False)
     data.fill_na(_method="linear")
     df = data.data
     #print(df.describe())
-    return df0, df
+    return df
     #df.describe(include=category)
