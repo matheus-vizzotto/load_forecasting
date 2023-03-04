@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import requests
 from typing import List
 import datetime as dt
@@ -22,6 +23,7 @@ class ons_data:
         self.data = pd.DataFrame()
         self.missing_dates = []
         self.datas_estranhas = []
+        self.seasonal_components = pd.DataFrame()
         #self.data_dt_inserted = pd.DataFrame()
         #self.data_treated = pd.DataFrame()
         self.data_dir = "../../../data/"
@@ -133,6 +135,11 @@ class ons_data:
         y.sort_index(inplace=True)
         self.data = y
         #return y
+    
+    def remove_outliers(self: pd.DataFrame) -> pd.DataFrame:
+        y = self.data
+        y.loc[:,"load_mwmed"] = np.where(y.loc[:,"load_mwmed"] <= 0, np.nan, y.loc[:,"load_mwmed"])
+        self.data = y
 
     def fill_na(self, _method: str, printer=False):
         """Preenche valores vazios.
@@ -167,6 +174,22 @@ class ons_data:
             plt.title(f"Valores vazios: {n_missing}")
             plt.show()
 
+    def get_seasonal_components(self):
+        x0 = self.data
+        x = x0.reset_index()
+        y = pd.DataFrame()
+        y["data"] = x["date"]
+        y["ano"] = x["date"].dt.year
+        y["trimestre"] = x["date"].dt.quarter
+        y["mes"] = x["date"].dt.month
+        y["semana_ano"] = x["date"].dt.isocalendar().week
+        y["dia"] = x["date"].dt.day
+        y["dia_ano"] = x["date"].dt.dayofyear
+        y["dia_semana"] = x["date"].dt.weekday + 1    # 1: segunda-feira; 7: domingo
+        y["hora"] = x["date"].dt.hour
+        y["apagao"] = x["date"].dt.year.apply(lambda x: 1 if x in [2001, 2002] else 0) # apagão de 2001 e 2002
+        self.seasonal_components = y
+
     
 def pipeline(x, update=False) -> pd.DataFrame:
     """Função que aplica o tratamento de dados na classe ons_data.
@@ -184,7 +207,9 @@ def pipeline(x, update=False) -> pd.DataFrame:
     data.check_date_column(printer=False)
     data.correct_dates(printer=False)
     #data.get_data_description(plot=False)
+    data.remove_outliers()
     data.fill_na(_method="linear")
+    data.get_seasonal_components()
     df = data.data
     #print(df.describe())
     return df
