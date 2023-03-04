@@ -22,8 +22,8 @@ class ons_data:
         self.data = pd.DataFrame()
         self.missing_dates = []
         self.datas_estranhas = []
-        self.data_dt_inserted = pd.DataFrame()
-        self.data_treated = pd.DataFrame()
+        #self.data_dt_inserted = pd.DataFrame()
+        #self.data_treated = pd.DataFrame()
         self.data_dir = "../../../data/"
 
     def read(self) -> pd.DataFrame:
@@ -47,7 +47,7 @@ class ons_data:
         df = df[df["id_reg"].isin(idreg)]
         df.set_index("date", inplace=True)
         self.data = df
-        return df
+        #return df
 
     def update(self, printer=False, write: bool=False) -> pd.DataFrame:
         """Função para atualizar os arquivos no diretório de dados.
@@ -88,7 +88,7 @@ class ons_data:
                 full_path = "".join([self.data_dir,f"{self.freq}_load.csv"])
                 df.to_csv(full_path, sep=";", decimal=",")
             self.data = df
-            return df
+            #return df
         else:
             print("Ano não disponível.")
     
@@ -108,24 +108,46 @@ class ons_data:
         missing_list = missing_dates_.to_list()
         dts_extras = date_col[~(date_col.isin(_dt_range))].to_list()
         if printer:
-            print("Datas faltantes:\n", missing_list)
-            print("Datas estranhas:\n", dts_extras)
+            print("Datas faltantes (incluir):\n", missing_list)
+            print("Datas estranhas (retirar):\n", dts_extras)
         self.datas_estranhas = dts_extras
         self.missing_dates = missing_list
-        return missing_list
+        #return missing_list
     
-    def insert_missing_dates(self):
-        y = self.data.reset_index()
+    def correct_dates(self, printer=False):
+        y = self.data
+        if printer:
+            print(f"Inserindo {len(self.missing_dates)} datas.\nRetirando {len(self.datas_estranhas)} datas.")
+        if self.datas_estranhas:
+            y.drop(self.datas_estranhas, axis=0, inplace=True)
+        y.reset_index(inplace=True)
         missing = pd.DataFrame(self.missing_dates, columns=["date"])
         y = pd.concat([y, missing], ignore_index=True)
         y.loc[:,"date"] = pd.to_datetime(y.loc[:,"date"])
         y.set_index("date", inplace=True)
         y.sort_index(inplace=True)
-        self.data_dt_inserted = y
-        return y
+        self.data = y
+        #return y
+
+    def fill_na(self, _method: str, printer=False):
+        """Preenche valores vazios.
+        Args:
+            _method (str): método para preencher os valores vazios. ["linear", "nearest", "spline", "polynomial"]
+        """
+        data = self.data
+        data.loc[:, "id_reg"] = data.loc[:, "id_reg"].ffill().bfill() 
+        data.loc[:, "desc_reg"] = data.loc[:, "desc_reg"].ffill().bfill() 
+        data.loc[:, "load_mwmed"] = data.loc[:, "load_mwmed"].interpolate(method=_method)
+        if printer:
+            print("Valores vazios restantes:")
+            print(data.isna().sum())
+        self.data = data
+        return data
 
     def get_data_description(self, plot=False):
-        data = self.data_dt_inserted
+        data = self.data
+        print(data.describe(include='all'))
+        print(data.info())
         print("Valores vazios:")
         n_missing = data["load_mwmed"].isna().sum()
         print(data.isna().sum())
@@ -140,29 +162,16 @@ class ons_data:
             plt.title(f"Valores vazios: {n_missing}")
             plt.show()
 
-    def fill_na(self, _method: str, printer=False):
-        """Preenche valores vazios.
-
-        Args:
-            _method (str): método para preencher os valores vazios. ["linear", "nearest", "spline", "polynomial"]
-        """
-        data = self.data_dt_inserted
-        data.loc[:, "id_reg"] = data.loc[:, "id_reg"].ffill().bfill() 
-        data.loc[:, "desc_reg"] = data.loc[:, "desc_reg"].ffill().bfill() 
-        data.loc[:, "load_mwmed"] = data.loc[:, "load_mwmed"].interpolate(method=_method)
-        print("Valores vazios restantes:")
-        print(data.isna().sum())
-        self.data_treated = data
-        return data
     
 def pipeline(x):
     data = x
     data.read()
-    data.check_date_column(printer=True)
-    data.insert_missing_dates()
-    data.get_data_description(plot=False)
+    df0 = data.data
+    data.check_date_column(printer=False)
+    data.correct_dates(printer=False)
+    #data.get_data_description(plot=False)
     data.fill_na(_method="linear")
-    df = data.data_treated
-    print(df.info())
-    print(df.describe())
+    df = data.data
+    #print(df.describe())
+    return df0, df
     #df.describe(include=category)

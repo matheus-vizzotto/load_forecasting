@@ -9,5 +9,12 @@ import funcs.data_wrangling as dw
 # df = data.data_treated
 # print(df.info())
 
-data = dw.ons_data(freq='h', ano_inicio=2000, ano_fim=2023, idreg="S")
-dw.pipeline(data)
+data1 = dw.ons_data(freq='d', ano_inicio=2000, ano_fim=2023, idreg="N")
+data1.read()
+df1 = data1.data
+data2 = dw.ons_data(freq='d', ano_inicio=2000, ano_fim=2023, idreg="N")
+df2 = dw.pipeline(data1)
+print(df1.info())
+print(df2.info())
+#print("\nDados antes:", df2.info())
+#print("Dados depois:", df1.info())
