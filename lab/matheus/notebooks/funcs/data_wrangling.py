@@ -214,3 +214,18 @@ def pipeline(x, update=False) -> pd.DataFrame:
     #print(df.describe())
     return df
     #df.describe(include=category)
+
+def prepare_statsforecast_df(x: pd.DataFrame, unique_id: str) -> pd.DataFrame:
+    """Função para transformar um DataFrame para o formato utilizado pelos algoritmos do pacote statsforecast (Nixtla)
+
+    Args:
+        x (pd.DataFrame): dataframe original.
+        unique_id (str): identificador da série (arbitrário).
+
+    Returns:
+        pd.DataFrame: dataframe no formato necessário.
+    """
+    df2 = x["load_mwmed"].reset_index()
+    df2.columns = ["ds", "y"]
+    df2["unique_id"] = unique_id
+    return df2
