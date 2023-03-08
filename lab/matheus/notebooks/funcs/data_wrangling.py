@@ -38,16 +38,17 @@ class ons_data:
             pd.DataFrame: série de carga elétrica no período entre ano_inicio e ano_fim.
         """
         if self.freq == "h":
-            path = "".join([self.data_dir,"hourly_load.csv"])
+            path = "".join([self.data_dir,"h_load.parquet"])
         elif self.freq == "d":
-            path = "".join([self.data_dir,"daily_load.csv"])
-        df = pd.read_csv(path, sep=";", decimal=",", parse_dates=["date"])
+            path = "".join([self.data_dir,"d_load.parquet"])
+        #df = pd.read_csv(path, sep=";", decimal=",", parse_dates=["date"])
+        df = pd.read_parquet(path)
         if not self.idreg:
             idreg = df["id_reg"].unique()
         else:
             idreg = [self.idreg]
         df = df[df["id_reg"].isin(idreg)]
-        df.set_index("date", inplace=True)
+        #df.set_index("date", inplace=True)
         self.data = df
         #return df
 
@@ -83,17 +84,25 @@ class ons_data:
                 df2 = pd.read_csv(url.format(ano), sep = ";")
                 df = pd.concat([df, df2])
             df.columns = ["id_reg", "desc_reg", "date", "load_mwmed"]
+            df = df.astype({
+                    "date": "datetime64[ns]",
+                    "id_reg": "category",
+                    "desc_reg": "category",
+                    "load_mwmed": "float64"
+                    })
             if not self.idreg:
                 idreg = df["id_reg"].unique()
             else:
                 idreg = [self.idreg]
             df = df[df["id_reg"].isin(idreg)]
-            df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"], format = date_format)
+            #df.loc[:, "date"] = pd.to_datetime(df.loc[:, "date"], format = date_format)
             df.sort_values(by = "date", inplace = True)
             df.set_index("date", inplace=True)
             if write:
-                full_path = "".join([self.data_dir,f"{self.freq}_load.csv"])
-                df.to_csv(full_path, sep=";", decimal=",")
+                #full_path = "".join([self.data_dir,f"{self.freq}_load.csv"])
+                full_path = "".join([self.data_dir,f"{self.freq}_load.parquet"])
+                df.to_parquet(full_path)
+                #df.to_csv(full_path, sep=";", decimal=",")
             self.data = df
             #return df
         else:
