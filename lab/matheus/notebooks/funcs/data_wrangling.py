@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 from zipfile import ZipFile
 import os
+import shutil
 
 class ons_data:
     """Classe destinada à leitura dos dados de carga da ONS
@@ -254,6 +255,7 @@ class inmet_data:
         self.ano_inicio = ano_inicio
         self.ano_fim = ano_fim
         self.data = pd.DataFrame()
+        self.freq = 'h'
         self.columns_dict = {
                             'DATA (YYYY-MM-DD)': 'data',
                             'Data': 'data',
@@ -321,6 +323,19 @@ class inmet_data:
             y = pd.to_datetime(x, format = '%Y/%m/%d %H:%M:%S')
         return y
     
+    def correct_dates(self, data, missing_dates, datas_estranhas=None, printer=False):
+        y = data
+        if printer:
+            print(f"Inserindo {len(missing_dates)} datas.\nRetirando {len(datas_estranhas)} datas.")
+        if datas_estranhas:
+            y.drop(datas_estranhas, axis=0, inplace=True)
+        y.reset_index(inplace=True)
+        missing = pd.DataFrame(missing_dates, columns=["data_hora"])
+        y = pd.concat([y, missing], ignore_index=True)
+        y.loc[:,"data_hora"] = pd.to_datetime(y.loc[:,"data_hora"])
+        y.set_index(["estacao","data_hora"], inplace=True)
+        return y
+    
     def write_parquet(self, df_, espec=None):
         if espec:
             ending = "".join(["_", str(espec)])
@@ -328,10 +343,20 @@ class inmet_data:
             ending = ""
         df_.to_parquet(f"inmet/inmet_data{ending}.parquet")
 
-    def download(self):
+    def download(self) -> None:
+        """Função que cria um diretório "inmet" no diretório atual e salva os arquivos tratados de cada ano nela
+        para depois serem unificados e salvos pelo método "build_database".
+        """
+
+        if "inmet" in os.listdir():
+            print("Diretório 'inmet' já presente na pasta atual.")
+            pass
+        else:
+            print("Criando diretório 'inmet' na pasta atual...")
+            os.mkdir("inmet")
         df = pd.DataFrame()
         for ano in range(self.ano_inicio, self.ano_fim+1):
-            print(f"Trabalhando no ano {ano}...")
+            print(f"Trabalhando nos dados de {ano}...")
             path = f'https://portal.inmet.gov.br/uploads/dadoshistoricos/{ano}.zip'
             r = requests.get(path, verify = False)
             files = ZipFile(BytesIO(r.content))
@@ -340,7 +365,7 @@ class inmet_data:
             for arquivo in arquivos:
                 info = pd.read_csv(files.open(arquivo), sep = ";", encoding = "latin-1", nrows=7, header = None)
                 #info2 = {line[1][0]: line[1][1] for line in info.iterrows()}
-                df02 = pd.read_csv(files.open(arquivo),  sep = ";", encoding = "latin-1", skiprows = 8)
+                df02 = pd.read_csv(files.open(arquivo),  sep = ";", encoding = "latin-1", skiprows = 8, nrows=4)
                 df02.rename(columns=self.columns_dict, inplace=True)
                 df02["estacao"] = info.iloc[2,1]
                 df02["uf"] = info.iloc[1,1]
@@ -356,24 +381,62 @@ class inmet_data:
                 df01 = pd.concat([df01, df02])
             self.write_parquet(df01, espec=ano)
 
-    def build_database(self):
+    def build_database(self, delete_partial_data=True):
         files = ["".join(["inmet/", file]) for file in os.listdir("inmet")]
         df = pd.DataFrame()
         for file in files:
-            print(f"Arquivo: {file}...")
+            print(f"Concatenando arquivo: {file}")
             df0 = pd.read_parquet(file)
             df0 = df0.astype(self.col_types)
             df = pd.concat([df,df0])
         #df.set_index(["estacao","data_hora"], inplace=True)
         df.to_parquet("inmet_data.parquet")
+        print("Arquivo 'inmet_data.parquet' salvo no diretório atual. Deletando pasta 'inmet'.")
+        if delete_partial_data:
+            shutil.rmtree("inmet")
+        else:
+            pass
 
     def read_parquet(self):
         path = None
         df = pd.read_parquet("inmet_data.parquet")
         df = df.astype(self.col_types)
         df.set_index(["estacao","data_hora"], inplace=True)
+        self.data = df
         return df
+    
+    def check_date_column(self, printer=True) -> List[dt.datetime]:
+        """Verifica datas faltantes no intervalo
 
+        Args:
+            _freq (str): frequência da série
+            printer (bool, optional): informa as datas faltantes em tela. Defaults to False.
+
+        Returns:
+            List[dt.datetime]: lista de datas faltantes
+        """
+        x = self.data.reset_index()
+
+        df=pd.DataFrame()
+        estacoes = x.estacao.unique()
+        for estacao in estacoes:
+            x2 = x[x["estacao"]==estacao]
+            date_col = x2["data_hora"]
+            _dt_range = pd.date_range(date_col.min(), date_col.max(), freq=self.freq)
+            missing_dates_ = _dt_range.difference(date_col)
+            missing_list = missing_dates_.to_list()
+            dts_extras = date_col[~(date_col.isin(_dt_range))].to_list()
+            if printer:
+                print(f"\n> Estação: {estacao}. Data mínima: {date_col.min()}. Data máxima: {date_col.max()}")
+                print("Datas faltantes (incluir):\n", missing_list)
+                print("Datas estranhas (retirar):\n", dts_extras)
+            datas_estranhas = dts_extras
+            missing_dates = missing_list
+            print("Corrigindo datas faltantes...")
+            df0 = self.correct_dates(data=x2, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
+            df = pd.concat([df,df0])
+        self.data = df
+        return df
     
 
         
