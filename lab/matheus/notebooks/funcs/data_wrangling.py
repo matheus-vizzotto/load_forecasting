@@ -304,7 +304,7 @@ class inmet_data:
                         'regiao': 'category'
                     } 
         
-    def ajusta_hora(x):
+    def ajusta_hora(self, x):
         if ":" in x:
             y = x
         elif "UTC" in x:
@@ -313,12 +313,19 @@ class inmet_data:
             y = None
         return y
 
-    def converte_data(x):
+    def converte_data(self, x):
         try:
             y = pd.to_datetime(x, format = '%Y-%m-%d %H:%M:%S')
         except:
             y = pd.to_datetime(x, format = '%Y/%m/%d %H:%M:%S')
         return y
+    
+    def write_parquet(self, df_, espec=None):
+        if espec:
+            ending = "".join(["_", str(espec)])
+        else:
+            ending = ""
+        df_.to_parquet(f"inmet/inmet_data{ending}.parquet")
 
     def download(self):
         df = pd.DataFrame()
@@ -346,10 +353,10 @@ class inmet_data:
                 if "Unnamed: 19" in df02.columns:
                     df02.drop(["Unnamed: 19"], axis=1, inplace=True)
                 df01 = pd.concat([df01, df02])
-            df = pd.concat([df, df01])
-        df.set_index("data_hora",inplace=True)
+            self.write_parquet(df01, espec=ano)
+
+        #df.set_index("data_hora",inplace=True)
+
     
-    def write_parquet(self):
-        x = self.data
-        x.to_parquet("inmet_data.parquet")
+
         

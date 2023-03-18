@@ -86,7 +86,7 @@ for ano in range(2010, 2024):
     files = ZipFile(BytesIO(r.content))
     arquivos = [file for file in files.namelist() if file.lower().endswith(".csv")]
 
-    #df01 = pd.DataFrame()
+    df01 = pd.DataFrame()
     for arquivo in arquivos:
         info = pd.read_csv(files.open(arquivo), sep = ";", encoding = "latin-1", nrows=7, header = None)
         info2 = {line[1][0]: line[1][1] for line in info.iterrows()}
@@ -101,22 +101,23 @@ for ano in range(2010, 2024):
         for col in df02.columns:
             df02.loc[:,col] = df02.loc[:,col].replace(",",".", regex=True)
         df02 = df02.astype(col_types)
-        #df02.loc[:, "hora"] = df02.loc[:, "hora"].apply(ajusta_hora)
-        #df02["data_hora"] = df02["data"] + " " + df02["hora"]
-        #df02.loc[:, "data_hora"] = df02.loc[:, "data_hora"].apply(converte_data)
+        df02.loc[:, "hora"] = df02.loc[:, "hora"].apply(ajusta_hora)
+        df02["data_hora"] = df02["data"] + " " + df02["hora"]
+        df02.loc[:, "data_hora"] = df02.loc[:, "data_hora"].apply(converte_data)
         if "Unnamed: 19" in df02.columns:
             df02.drop(["Unnamed: 19"], axis=1, inplace=True) 
         #df01 = pd.concat([df01, df02])
-        df = pd.concat([df, df02])
+        df01 = pd.concat([df01, df02])
         #print(df["data_hora"].iloc[-1], df["estacao"].iloc[-1])
-        print("\t",df["estacao"].iloc[-1])
+        #print("\t",df["estacao"].iloc[-1])
+    df01.to_parquet(f"inmet/inmet_data_{ano}.parquet")
         #for col in df02.columns.to_list():
         #    nomes_colunas.append(col)
     #df = pd.concat([df, df01])
 
 
-df.loc[:, "hora"] = df.loc[:, "hora"].apply(ajusta_hora)
-df["data_hora"] = df["data"] + " " + df["hora"]
-df.loc[:, "data_hora"] = df.loc[:, "data_hora"].apply(converte_data)
+# df.loc[:, "hora"] = df.loc[:, "hora"].apply(ajusta_hora)
+# df["data_hora"] = df["data"] + " " + df["hora"]
+# df.loc[:, "data_hora"] = df.loc[:, "data_hora"].apply(converte_data)
 
-df.to_parquet("inmet_data.parquet")
+# df.to_parquet("inmet_data.parquet")
