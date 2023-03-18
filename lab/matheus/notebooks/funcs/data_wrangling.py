@@ -323,7 +323,14 @@ class inmet_data:
             y = pd.to_datetime(x, format = '%Y/%m/%d %H:%M:%S')
         return y
     
-    def correct_dates(self, data, missing_dates, datas_estranhas=None, printer=False):
+    def write_parquet(self, df_, espec=None):
+        if espec:
+            ending = "".join(["_", str(espec)])
+        else:
+            ending = ""
+        df_.to_parquet(f"inmet/inmet_data{ending}.parquet")
+
+    def correct_dates(self, estacao, data, missing_dates, datas_estranhas=None, printer=False):
         y = data
         if printer:
             print(f"Inserindo {len(missing_dates)} datas.\nRetirando {len(datas_estranhas)} datas.")
@@ -332,17 +339,34 @@ class inmet_data:
         y.reset_index(inplace=True)
         missing = pd.DataFrame(missing_dates, columns=["data_hora"])
         y = pd.concat([y, missing], ignore_index=True)
+        y.loc[:,"estacao"] = estacao
         y.loc[:,"data_hora"] = pd.to_datetime(y.loc[:,"data_hora"])
-        y.set_index(["estacao","data_hora"], inplace=True)
+        y.sort_values(by="data_hora",inplace=True)
+        #y.set_index(["estacao","data_hora"], inplace=True)
         return y
-    
-    def write_parquet(self, df_, espec=None):
-        if espec:
-            ending = "".join(["_", str(espec)])
-        else:
-            ending = ""
-        df_.to_parquet(f"inmet/inmet_data{ending}.parquet")
 
+    def check_date_column(self, estacao, data_, printer=True) -> List[dt.datetime]:
+        """Verifica datas faltantes no intervalo
+
+        Args:
+            _freq (str): frequência da série
+            printer (bool, optional): informa as datas faltantes em tela. Defaults to False.
+
+        Returns:
+            List[dt.datetime]: lista de datas faltantes
+        """
+        date_col = data_["data_hora"]
+        _dt_range = pd.date_range(date_col.min(), date_col.max(), freq=self.freq)
+        missing_dates_ = _dt_range.difference(date_col)
+        missing_list = missing_dates_.to_list()
+        dts_extras = date_col[~(date_col.isin(_dt_range))].to_list()
+        if printer and (missing_list or dts_extras):
+            print("Datas faltantes (incluir):\n", missing_list)
+            print("Datas estranhas (retirar):\n", dts_extras)
+        datas_estranhas = dts_extras
+        missing_dates = missing_list
+        return self.correct_dates(data=data_, estacao = estacao, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
+    
     def download(self) -> None:
         """Função que cria um diretório "inmet" no diretório atual e salva os arquivos tratados de cada ano nela
         para depois serem unificados e salvos pelo método "build_database".
@@ -363,9 +387,11 @@ class inmet_data:
             arquivos = [file for file in files.namelist() if file.lower().endswith(".csv")]
             df01 = pd.DataFrame()
             for arquivo in arquivos:
+                #print("\n\n")
                 info = pd.read_csv(files.open(arquivo), sep = ";", encoding = "latin-1", nrows=7, header = None)
                 #info2 = {line[1][0]: line[1][1] for line in info.iterrows()}
-                df02 = pd.read_csv(files.open(arquivo),  sep = ";", encoding = "latin-1", skiprows = 8, nrows=4)
+                df02 = pd.read_csv(files.open(arquivo),  sep = ";", encoding = "latin-1", skiprows = 8)#, nrows=4)
+                #df02.drop(2,axis=0,inplace=True) #teste para ver se check_date_column funcion#
                 df02.rename(columns=self.columns_dict, inplace=True)
                 df02["estacao"] = info.iloc[2,1]
                 df02["uf"] = info.iloc[1,1]
@@ -378,6 +404,8 @@ class inmet_data:
                 df02.loc[:, "data_hora"] = df02.loc[:, "data_hora"].apply(self.converte_data) 
                 if "Unnamed: 19" in df02.columns:
                     df02.drop(["Unnamed: 19"], axis=1, inplace=True)
+                df02 = self.check_date_column(estacao=info.iloc[2,1], data_=df02)
+                #print("DATA PARA CHECK:", df02.iloc[2])
                 df01 = pd.concat([df01, df02])
             self.write_parquet(df01, espec=ano)
 
@@ -405,38 +433,38 @@ class inmet_data:
         self.data = df
         return df
     
-    def check_date_column(self, printer=True) -> List[dt.datetime]:
-        """Verifica datas faltantes no intervalo
+    # def check_date_column(self, printer=True) -> List[dt.datetime]:
+    #     """Verifica datas faltantes no intervalo
 
-        Args:
-            _freq (str): frequência da série
-            printer (bool, optional): informa as datas faltantes em tela. Defaults to False.
+    #     Args:
+    #         _freq (str): frequência da série
+    #         printer (bool, optional): informa as datas faltantes em tela. Defaults to False.
 
-        Returns:
-            List[dt.datetime]: lista de datas faltantes
-        """
-        x = self.data.reset_index()
+    #     Returns:
+    #         List[dt.datetime]: lista de datas faltantes
+    #     """
+    #     x = self.data.reset_index()
 
-        df=pd.DataFrame()
-        estacoes = x.estacao.unique()
-        for estacao in estacoes:
-            x2 = x[x["estacao"]==estacao]
-            date_col = x2["data_hora"]
-            _dt_range = pd.date_range(date_col.min(), date_col.max(), freq=self.freq)
-            missing_dates_ = _dt_range.difference(date_col)
-            missing_list = missing_dates_.to_list()
-            dts_extras = date_col[~(date_col.isin(_dt_range))].to_list()
-            if printer:
-                print(f"\n> Estação: {estacao}. Data mínima: {date_col.min()}. Data máxima: {date_col.max()}")
-                print("Datas faltantes (incluir):\n", missing_list)
-                print("Datas estranhas (retirar):\n", dts_extras)
-            datas_estranhas = dts_extras
-            missing_dates = missing_list
-            print("Corrigindo datas faltantes...")
-            df0 = self.correct_dates(data=x2, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
-            df = pd.concat([df,df0])
-        self.data = df
-        return df
+    #     df=pd.DataFrame()
+    #     estacoes = x.estacao.unique()
+    #     for estacao in estacoes:
+    #         x2 = x[x["estacao"]==estacao]
+    #         date_col = x2["data_hora"]
+    #         _dt_range = pd.date_range(date_col.min(), date_col.max(), freq=self.freq)
+    #         missing_dates_ = _dt_range.difference(date_col)
+    #         missing_list = missing_dates_.to_list()
+    #         dts_extras = date_col[~(date_col.isin(_dt_range))].to_list()
+    #         if printer:
+    #             print(f"\n> Estação: {estacao}. Data mínima: {date_col.min()}. Data máxima: {date_col.max()}")
+    #             print("Datas faltantes (incluir):\n", missing_list)
+    #             print("Datas estranhas (retirar):\n", dts_extras)
+    #         datas_estranhas = dts_extras
+    #         missing_dates = missing_list
+    #         print("Corrigindo datas faltantes...")
+    #         df0 = self.correct_dates(data=x2, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
+    #         df = pd.concat([df,df0])
+    #     self.data = df
+    #     return df
     
 
         
