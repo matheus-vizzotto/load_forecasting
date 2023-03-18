@@ -6,6 +6,7 @@ import datetime as dt
 import matplotlib.pyplot as plt
 from io import BytesIO
 from zipfile import ZipFile
+import os
 
 class ons_data:
     """Classe destinada à leitura dos dados de carga da ONS
@@ -355,7 +356,22 @@ class inmet_data:
                 df01 = pd.concat([df01, df02])
             self.write_parquet(df01, espec=ano)
 
-        #df.set_index("data_hora",inplace=True)
+    def build_database(self):
+        files = ["".join(["inmet/", file]) for file in os.listdir("inmet")]
+        df = pd.DataFrame()
+        for file in files:
+            print(f"Arquivo: {file}...")
+            df0 = pd.read_parquet(file)
+            df0 = df0.astype(self.col_types)
+            df = pd.concat([df,df0])
+        df.set_index(["estacao","data_hora"], inplace=True)
+        df.to_parquet("inmet_data.parquet")
+
+    def read_parquet(self):
+        path = None
+        df = pd.read_parquet("inmet_data.parquet")
+        df = df.astype(self.col_types)
+        return df
 
     
 
