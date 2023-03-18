@@ -364,13 +364,14 @@ class inmet_data:
             df0 = pd.read_parquet(file)
             df0 = df0.astype(self.col_types)
             df = pd.concat([df,df0])
-        df.set_index(["estacao","data_hora"], inplace=True)
+        #df.set_index(["estacao","data_hora"], inplace=True)
         df.to_parquet("inmet_data.parquet")
 
     def read_parquet(self):
         path = None
         df = pd.read_parquet("inmet_data.parquet")
         df = df.astype(self.col_types)
+        df.set_index(["estacao","data_hora"], inplace=True)
         return df
 
     
