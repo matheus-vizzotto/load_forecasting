@@ -343,8 +343,8 @@ class inmet_data:
         y = pd.concat([y, missing], ignore_index=True)
         y.loc[:,"estacao"] = estacao
         y.loc[:,"data_hora"] = pd.to_datetime(y.loc[:,"data_hora"])
-        y.sort_values(by="data_hora",inplace=True)
-        #y.set_index(["estacao","data_hora"], inplace=True)
+        #y.sort_values(by="data_hora",inplace=True)
+        y.set_index(["estacao","data_hora"], inplace=True)
         return y
 
     def check_date_column(self, estacao, data_, printer=True) -> List[dt.datetime]:
@@ -369,6 +369,15 @@ class inmet_data:
         missing_dates = missing_list
         return self.correct_dates(data=data_, estacao = estacao, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
     
+<<<<<<< Updated upstream
+=======
+    def fill_na(self, data_: pd.DataFrame, col_name: str) -> pd.Series:
+        col = data_[col_name]
+        roll_mean = col.rolling(window=30, min_periods=1).mean()
+        col = col.fillna(roll_mean).fillna(method="bfill")
+        return col
+    
+>>>>>>> Stashed changes
     def download(self) -> None:
         """Função que cria um diretório "inmet" no diretório atual e salva os arquivos tratados de cada ano nela
         para depois serem unificados e salvos pelo método "build_database".
@@ -407,6 +416,8 @@ class inmet_data:
                 if "Unnamed: 19" in df02.columns:
                     df02.drop(["Unnamed: 19"], axis=1, inplace=True)
                 df02 = self.check_date_column(estacao=info.iloc[2,1], data_=df02)
+                for col in df02.columns:
+                    df02[col] = self.fill_na(data_=df02, col_name=col)
                 #print("DATA PARA CHECK:", df02.iloc[2])
                 df01 = pd.concat([df01, df02])
             self.write_parquet(df01, espec=ano)
