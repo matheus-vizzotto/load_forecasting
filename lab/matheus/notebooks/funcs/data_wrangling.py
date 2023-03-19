@@ -1,13 +1,15 @@
-import pandas as pd
-import numpy as np
-import requests
-from typing import List
 import datetime as dt
-import matplotlib.pyplot as plt
-from io import BytesIO
-from zipfile import ZipFile
 import os
 import shutil
+from io import BytesIO
+from typing import List
+from zipfile import ZipFile
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import requests
+
 
 class ons_data:
     """Classe destinada à leitura dos dados de carga da ONS
