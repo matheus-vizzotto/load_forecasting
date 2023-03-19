@@ -368,16 +368,13 @@ class inmet_data:
         datas_estranhas = dts_extras
         missing_dates = missing_list
         return self.correct_dates(data=data_, estacao = estacao, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
-    
-<<<<<<< Updated upstream
-=======
+
     def fill_na(self, data_: pd.DataFrame, col_name: str) -> pd.Series:
         col = data_[col_name]
         roll_mean = col.rolling(window=30, min_periods=1).mean()
         col = col.fillna(roll_mean).fillna(method="bfill")
         return col
-    
->>>>>>> Stashed changes
+
     def download(self) -> None:
         """Função que cria um diretório "inmet" no diretório atual e salva os arquivos tratados de cada ano nela
         para depois serem unificados e salvos pelo método "build_database".
