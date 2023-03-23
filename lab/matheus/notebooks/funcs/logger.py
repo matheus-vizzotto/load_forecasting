@@ -22,3 +22,13 @@ def log_data_info(estacao: str, ano: int, nans: int):
     """
     logger.warning(f"[RESUMO] Estação {estacao}, ano {ano}: VALORES VAZIOS: {nans:,}")# | DATA MÍNIMA: {date_min} | DATA MÁXIMA: {date_max}")
 
+def log_dates(estacao: str, ano: int, missing_dates: list, datas_estranhas: list):
+    """_summary_
+
+    Args:
+        estacao (str): _description_
+        ano (int): _description_
+        missing_dates (list): _description_
+        datas_estranhas (list): _description_
+    """
+    logger.warning(f"[RESUMO] Estação {estacao}, ano {ano}: DATAS FALTANTES: {missing_dates} | DATAS ESTRANHAS: {datas_estranhas}")

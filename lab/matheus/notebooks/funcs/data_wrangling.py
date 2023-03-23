@@ -347,7 +347,7 @@ class inmet_data:
         #y.set_index(["estacao","data_hora"], inplace=True)
         return y
 
-    def check_date_column(self, estacao, data_, printer=True) -> List[dt.datetime]:
+    def check_date_column(self, estacao, data_, printer=True, ano=None) -> List[dt.datetime]:
         """Verifica datas faltantes no intervalo
 
         Args:
@@ -367,6 +367,7 @@ class inmet_data:
             print("Datas estranhas (retirar):\n", dts_extras)
         datas_estranhas = dts_extras
         missing_dates = missing_list
+        lg.log_dates(estacao=estacao, missing_dates=missing_dates, datas_estranhas=datas_estranhas, ano=ano)
         return self.correct_dates(data=data_, estacao = estacao, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
     
     def fill_na(self, col: pd.Series) -> pd.Series:
