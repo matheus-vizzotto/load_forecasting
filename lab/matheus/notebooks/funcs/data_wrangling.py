@@ -349,7 +349,7 @@ class inmet_data:
         y.set_index(["estacao","data_hora"], inplace=True)
         return y
 
-    def check_date_column(self, estacao, data_, printer=True) -> List[dt.datetime]:
+    def check_date_column(self, estacao, data_, printer=True, ano=None) -> List[dt.datetime]:
         """Verifica datas faltantes no intervalo
 
         Args:
@@ -369,6 +369,7 @@ class inmet_data:
             print("Datas estranhas (retirar):\n", dts_extras)
         datas_estranhas = dts_extras
         missing_dates = missing_list
+        lg.log_dates(estacao=estacao, ano=ano, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
         return self.correct_dates(data=data_, estacao = estacao, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
 
     def fill_na(self, data_: pd.DataFrame, col_name: str) -> pd.Series:
@@ -421,7 +422,7 @@ class inmet_data:
                 if "Unnamed: 19" in df02.columns:
                     df02.drop(["Unnamed: 19"], axis=1, inplace=True)
                 df02.drop(["data", "hora"], axis=1, inplace=True)
-                df02 = self.check_date_column(estacao=info.iloc[2,1], data_=df02)
+                df02 = self.check_date_column(estacao=info.iloc[2,1], data_=df02, ano=ano)
                 # valores vazios
                 df02.replace(-9999, np.nan, inplace=True)
                 lg.log_data_info(estacao=info.iloc[2,1], ano=ano, nans=df02.isna().sum().sum())
