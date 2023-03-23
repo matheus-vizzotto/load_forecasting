@@ -373,7 +373,7 @@ class inmet_data:
     
     def fill_na(self, col: pd.Series) -> pd.Series:
         col = self.data[col]
-        if (col.dtype.kind in 'iu') or (col.dtype.kind in 'f'):
+        if ((col.dtype.kind in 'iu') or (col.dtype.kind in 'f')):
             roll_mean = col.rolling(window=30, min_periods=1).mean()
             col = col.fillna(roll_mean).fillna(col.mean()).fillna(method="bfill")
         else:
