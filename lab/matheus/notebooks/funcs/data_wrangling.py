@@ -371,8 +371,12 @@ class inmet_data:
         return self.correct_dates(data=data_, estacao = estacao, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
     
     def fill_na(self, col: pd.Series) -> pd.Series:
-        roll_mean = col.rolling(window=30, min_periods=1).mean()
-        col = col.fillna(roll_mean).fillna(method="bfill")
+        col = self.data[col]
+        if (col.dtype.kind in 'iu') or (col.dtype.kind in 'f'):
+            roll_mean = col.rolling(window=30, min_periods=1).mean()
+            col = col.fillna(roll_mean).fillna(col.mean()).fillna(method="bfill")
+        else:
+            col.fillna(method="ffill").fillna(method="bfill")
         return col
     
     def download(self) -> None:
