@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.WARNING,
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
+
 def log_data_info(estacao: str, ano: int, nans: int):
     """_summary_
 
