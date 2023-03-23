@@ -372,12 +372,11 @@ class inmet_data:
         return self.correct_dates(data=data_, estacao = estacao, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
     
     def fill_na(self, col: pd.Series) -> pd.Series:
-        col = self.data[col]
         if ((col.dtype.kind in 'iu') or (col.dtype.kind in 'f')):
             roll_mean = col.rolling(window=30, min_periods=1).mean()
             col = col.fillna(roll_mean).fillna(col.mean()).fillna(method="bfill")
         else:
-            col.fillna(method="ffill").fillna(method="bfill")
+            col = col.fillna(method="ffill").fillna(method="bfill")
         return col
     
     def download(self) -> None:
@@ -418,7 +417,12 @@ class inmet_data:
                 df02.loc[:, "data_hora"] = df02.loc[:, "data_hora"].apply(self.converte_data) 
                 if "Unnamed: 19" in df02.columns:
                     df02.drop(["Unnamed: 19"], axis=1, inplace=True)
-                df02 = self.check_date_column(estacao=estacao, data_=df02)
+                df02.drop(["data", "hora"], axis=1, inplace=True)
+                df02.replace(-9999, np.nan, inplace=True)
+                lg.log_data_info(estacao=estacao, ano=ano, nans=df02.isna().sum().sum())
+                for col in df02.columns:
+                    df02.loc[:,col] = self.fill_na(df02[col])
+                df02 = self.check_date_column(estacao=estacao, data_=df02, ano=ano)
                 lg.log_data_info(estacao=estacao, ano=ano, nans=df02.isna().sum().sum())
                 #print("DATA PARA CHECK:", df02.iloc[2])
                 df01 = pd.concat([df01, df02])

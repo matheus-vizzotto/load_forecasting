@@ -1,4 +1,2 @@
 *.csv
 *.parquet
-*.log
-lab/matheus/notebooks/logs/data_info.log
