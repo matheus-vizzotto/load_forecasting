@@ -439,39 +439,7 @@ class inmet_data:
         df.set_index(["estacao","data_hora"], inplace=True)
         self.data = df
         return df
-    
-    # def check_date_column(self, printer=True) -> List[dt.datetime]:
-    #     """Verifica datas faltantes no intervalo
 
-    #     Args:
-    #         _freq (str): frequência da série
-    #         printer (bool, optional): informa as datas faltantes em tela. Defaults to False.
-
-    #     Returns:
-    #         List[dt.datetime]: lista de datas faltantes
-    #     """
-    #     x = self.data.reset_index()
-
-    #     df=pd.DataFrame()
-    #     estacoes = x.estacao.unique()
-    #     for estacao in estacoes:
-    #         x2 = x[x["estacao"]==estacao]
-    #         date_col = x2["data_hora"]
-    #         _dt_range = pd.date_range(date_col.min(), date_col.max(), freq=self.freq)
-    #         missing_dates_ = _dt_range.difference(date_col)
-    #         missing_list = missing_dates_.to_list()
-    #         dts_extras = date_col[~(date_col.isin(_dt_range))].to_list()
-    #         if printer:
-    #             print(f"\n> Estação: {estacao}. Data mínima: {date_col.min()}. Data máxima: {date_col.max()}")
-    #             print("Datas faltantes (incluir):\n", missing_list)
-    #             print("Datas estranhas (retirar):\n", dts_extras)
-    #         datas_estranhas = dts_extras
-    #         missing_dates = missing_list
-    #         print("Corrigindo datas faltantes...")
-    #         df0 = self.correct_dates(data=x2, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
-    #         df = pd.concat([df,df0])
-    #     self.data = df
-    #     return df
     
 
         
