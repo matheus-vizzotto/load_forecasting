@@ -4,6 +4,7 @@ import shutil
 from io import BytesIO
 from typing import List
 from zipfile import ZipFile
+import funcs.logger as lg
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -413,6 +414,7 @@ class inmet_data:
                 if "Unnamed: 19" in df02.columns:
                     df02.drop(["Unnamed: 19"], axis=1, inplace=True)
                 df02 = self.check_date_column(estacao=info.iloc[2,1], data_=df02)
+                lg.log_data_info(estacao=estacao, ano=ano, nans=df02.isna().sum().sum())
                 #print("DATA PARA CHECK:", df02.iloc[2])
                 df01 = pd.concat([df01, df02])
             self.write_parquet(df01, espec=ano)
