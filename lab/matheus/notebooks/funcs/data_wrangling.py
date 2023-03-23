@@ -4,6 +4,7 @@ import shutil
 from io import BytesIO
 from typing import List
 from zipfile import ZipFile
+import funcs.logger as lg
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -405,7 +406,8 @@ class inmet_data:
                 df02 = pd.read_csv(files.open(arquivo),  sep = ";", encoding = "latin-1", skiprows = 8)#, nrows=4)
                 #df02.drop(2,axis=0,inplace=True) #teste para ver se check_date_column funcion#
                 df02.rename(columns=self.columns_dict, inplace=True)
-                df02["estacao"] = info.iloc[2,1]
+                estacao = info.iloc[2,1]
+                df02["estacao"] = estacao
                 df02["uf"] = info.iloc[1,1]
                 df02["regiao"] = info.iloc[0,1]
                 for col in df02.columns:
@@ -416,7 +418,8 @@ class inmet_data:
                 df02.loc[:, "data_hora"] = df02.loc[:, "data_hora"].apply(self.converte_data) 
                 if "Unnamed: 19" in df02.columns:
                     df02.drop(["Unnamed: 19"], axis=1, inplace=True)
-                df02 = self.check_date_column(estacao=info.iloc[2,1], data_=df02)
+                df02 = self.check_date_column(estacao=estacao, data_=df02)
+                lg.log_data_info(estacao=estacao, ano=ano, nans=df02.isna().sum().sum())
                 #print("DATA PARA CHECK:", df02.iloc[2])
                 df01 = pd.concat([df01, df02])
             self.write_parquet(df01, espec=ano)
