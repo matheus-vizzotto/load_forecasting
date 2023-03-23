@@ -4,11 +4,13 @@ import shutil
 from io import BytesIO
 from typing import List
 from zipfile import ZipFile
+import funcs.logger as lg
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
+
 
 
 class ons_data:
@@ -371,8 +373,11 @@ class inmet_data:
 
     def fill_na(self, data_: pd.DataFrame, col_name: str) -> pd.Series:
         col = data_[col_name]
-        roll_mean = col.rolling(window=30, min_periods=1).mean()
-        col = col.fillna(roll_mean).fillna(method="bfill")
+        if (col.dtype.kind in 'iu') or (col.dtype.kind == 'f'): # integer ou float
+            roll_mean = col.rolling(window=30, min_periods=1).mean()
+            col = col.fillna(roll_mean).fillna(col.mean())
+        else:
+            col = col.fillna(method="ffill").fillna(method="bfill")
         return col
 
     def download(self) -> None:
@@ -401,21 +406,30 @@ class inmet_data:
                 df02 = pd.read_csv(files.open(arquivo),  sep = ";", encoding = "latin-1", skiprows = 8)#, nrows=4)
                 #df02.drop(2,axis=0,inplace=True) #teste para ver se check_date_column funcion#
                 df02.rename(columns=self.columns_dict, inplace=True)
+                # identificação
                 df02["estacao"] = info.iloc[2,1]
                 df02["uf"] = info.iloc[1,1]
                 df02["regiao"] = info.iloc[0,1]
+                # tipos de dados
                 for col in df02.columns:
                     df02.loc[:,col] = df02.loc[:,col].replace(",",".", regex=True)
                 df02 = df02.astype(self.col_types)
+                # coluna de data
                 df02.loc[:, "hora"] = df02.loc[:, "hora"].apply(self.ajusta_hora)
                 df02["data_hora"] = df02["data"] + " " + df02["hora"]
                 df02.loc[:, "data_hora"] = df02.loc[:, "data_hora"].apply(self.converte_data) 
                 if "Unnamed: 19" in df02.columns:
                     df02.drop(["Unnamed: 19"], axis=1, inplace=True)
+                df02.drop(["data", "hora"], axis=1, inplace=True)
                 df02 = self.check_date_column(estacao=info.iloc[2,1], data_=df02)
+                # valores vazios
+                df02.replace(-9999, np.nan, inplace=True)
+                lg.log_data_info(estacao=info.iloc[2,1], ano=ano, nans=df02.isna().sum().sum())
+                #logging.warning(f"[RESUMO] Estação {info.iloc[2,1]}, ano {ano}: VALORES VAZIOS: {df02.isna().sum().sum():,}")
                 for col in df02.columns:
                     df02[col] = self.fill_na(data_=df02, col_name=col)
                 #print("DATA PARA CHECK:", df02.iloc[2])
+
                 df01 = pd.concat([df01, df02])
             self.write_parquet(df01, espec=ano)
 
@@ -442,39 +456,6 @@ class inmet_data:
         df.set_index(["estacao","data_hora"], inplace=True)
         self.data = df
         return df
-    
-    # def check_date_column(self, printer=True) -> List[dt.datetime]:
-    #     """Verifica datas faltantes no intervalo
-
-    #     Args:
-    #         _freq (str): frequência da série
-    #         printer (bool, optional): informa as datas faltantes em tela. Defaults to False.
-
-    #     Returns:
-    #         List[dt.datetime]: lista de datas faltantes
-    #     """
-    #     x = self.data.reset_index()
-
-    #     df=pd.DataFrame()
-    #     estacoes = x.estacao.unique()
-    #     for estacao in estacoes:
-    #         x2 = x[x["estacao"]==estacao]
-    #         date_col = x2["data_hora"]
-    #         _dt_range = pd.date_range(date_col.min(), date_col.max(), freq=self.freq)
-    #         missing_dates_ = _dt_range.difference(date_col)
-    #         missing_list = missing_dates_.to_list()
-    #         dts_extras = date_col[~(date_col.isin(_dt_range))].to_list()
-    #         if printer:
-    #             print(f"\n> Estação: {estacao}. Data mínima: {date_col.min()}. Data máxima: {date_col.max()}")
-    #             print("Datas faltantes (incluir):\n", missing_list)
-    #             print("Datas estranhas (retirar):\n", dts_extras)
-    #         datas_estranhas = dts_extras
-    #         missing_dates = missing_list
-    #         print("Corrigindo datas faltantes...")
-    #         df0 = self.correct_dates(data=x2, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
-    #         df = pd.concat([df,df0])
-    #     self.data = df
-    #     return df
     
 
         

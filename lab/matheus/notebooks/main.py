@@ -1,5 +1,3 @@
-import funcs.data_wrangling as dw
-
 # # data = dw.ons_data(freq='h', ano_inicio=2000, ano_fim=2023, idreg="S")
 # # data.read()
 # # data.check_date_column(printer=True)
@@ -23,6 +21,7 @@ import funcs.data_wrangling as dw
 import funcs.data_wrangling as dw
 import os
 import warnings
+
 warnings.filterwarnings('ignore')
 os.chdir(r"C:\Users\user\Projetos\load_forecasting\lab\matheus\notebooks")
 
