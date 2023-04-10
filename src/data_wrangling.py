@@ -259,6 +259,7 @@ class inmet_data:
         self.ano_fim = ano_fim
         self.data = pd.DataFrame()
         self.freq = 'h'
+        #self.url = f'https://portal.inmet.gov.br/uploads/dadoshistoricos/{ano}.zip'
         self.columns_dict = {
                             'DATA (YYYY-MM-DD)': 'data',
                             'Data': 'data',
