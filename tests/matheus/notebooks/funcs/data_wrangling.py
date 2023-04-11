@@ -406,9 +406,12 @@ class inmet_data:
                 #df02.drop(2,axis=0,inplace=True) #teste para ver se check_date_column funcion#
                 df02.rename(columns=self.columns_dict, inplace=True)
                 estacao = info.iloc[2,1]
+                regiao = info.iloc[0,1]
+                if regiao != "S":  # FILTRAR APENAS REGIÃO SUL
+                    continue
                 df02["estacao"] = estacao
                 df02["uf"] = info.iloc[1,1]
-                df02["regiao"] = info.iloc[0,1]
+                df02["regiao"] = regiao
                 for col in df02.columns:
                     df02.loc[:,col] = df02.loc[:,col].replace(",",".", regex=True)
                 df02 = df02.astype(self.col_types)
