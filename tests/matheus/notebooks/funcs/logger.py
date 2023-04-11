@@ -1,7 +1,8 @@
 import logging
 
 logging.basicConfig(level=logging.WARNING,
-                    filename='lab/matheus/notebooks/logs/data_info.log',
+                    #filename='lab/matheus/notebooks/logs/data_info.log',
+                    filename='C:/Users/user/Projetos/load_forecasting/tests/matheus/notebooks/logs/data_info.log', # TODO: AJUSTAR PARA CAMINHO RELATIVO
                     filemode='w',
                     format = '%(asctime)s - %(message)s')
 

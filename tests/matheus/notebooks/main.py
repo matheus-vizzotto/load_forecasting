@@ -24,16 +24,16 @@ import funcs.data_wrangling as dw
 import os
 import warnings
 warnings.filterwarnings('ignore')
-os.chdir(r"C:\Users\user\Projetos\load_forecasting\lab\matheus\notebooks")
+os.chdir(r"C:\Users\user\Projetos\load_forecasting\tests\matheus\notebooks")
 
-data = dw.inmet_data(2000, 2023)
-df = data.read_parquet()
-print(df.info())
-print(df.shape)
-print(df.isna().sum())
+data = dw.inmet_data(2012, 2023)
+# df = data.read_parquet()
+# print(df.info())
+# print(df.shape)
+# print(df.isna().sum())
 #print(os.listdir())
-#data.download()
-#data.build_database()
+data.download()
+data.build_database()
 #df = data.read_parquet()
 #data.check_date_column()
 

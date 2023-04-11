@@ -5,12 +5,11 @@ from io import BytesIO
 from typing import List
 from zipfile import ZipFile
 import funcs.logger as lg
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
-
+#import mypy
 
 class ons_data:
     """Classe destinada à leitura dos dados de carga da ONS
@@ -375,7 +374,7 @@ class inmet_data:
     def fill_na(self, col: pd.Series) -> pd.Series:
         if ((col.dtype.kind in 'iu') or (col.dtype.kind in 'f')): # coluna é de int ou float
             roll_mean = col.rolling(window=30, min_periods=1).mean()
-            col = col.fillna(roll_mean).fillna(col.mean()).fillna(method="bfill")
+            col = col.fillna(roll_mean).fillna(col.mean())#.fillna(method="bfill")
         else:
             col = col.fillna(method="ffill").fillna(method="bfill")
         return col
@@ -421,12 +420,14 @@ class inmet_data:
                 df02.drop(["data", "hora"], axis=1, inplace=True)
                 df02.replace(-9999, np.nan, inplace=True)
                 lg.log_data_info(estacao=estacao, ano=ano, nans=df02.isna().sum().sum())
+                df02 = self.check_date_column(estacao=estacao, data_=df02, ano=ano)
                 for col in df02.columns:
                     df02.loc[:,col] = self.fill_na(df02[col])
-                df02 = self.check_date_column(estacao=estacao, data_=df02, ano=ano)
+                #df02 = self.check_date_column(estacao=estacao, data_=df02, ano=ano)
                 lg.log_data_info(estacao=estacao, ano=ano, nans=df02.isna().sum().sum())
                 #print("DATA PARA CHECK:", df02.iloc[2])
                 df01 = pd.concat([df01, df02])
+            df01.sort_values(by=["estacao", "data_hora"])
             self.write_parquet(df01, espec=ano)
 
     def build_database(self, delete_partial_data=True):
@@ -446,13 +447,53 @@ class inmet_data:
             pass
 
     def read_parquet(self):
+        """_summary_
+
+        Args:
+            start (int, optional): _description_. Defaults to self.data_inicio.
+            end (int, optional): _description_. Defaults to self.data_fim.
+
+        Returns:
+            _type_: _description_
+        """
         path = None
         df = pd.read_parquet("inmet_data.parquet")
         df = df.astype(self.col_types)
         df.set_index(["estacao","data_hora"], inplace=True)
+        df.sort_index(inplace=True)
+        df.drop("index", axis=1, inplace=True)
+        idx = pd.IndexSlice
+        inicio = f"{self.ano_inicio}"
+        fim = f"{self.ano_fim}"
+        df2 = df.loc[idx[:, inicio:fim], :]
+        df2 = df[df2.regiao == "S"]
         self.data = df
-        return df
+        #return df2
 
+    def aggregate_by_hour(self, write=True):
+        agg_dict = {
+                'precipitacao_total_horario_mm': 'sum',
+                'pressao_atmosferica_ao_nivel_da_estacao_horaria_m_b': 'mean',
+                'pressao_atmosferica_max_na_hora_ant_aut_m_b': 'mean',
+                'pressao_atmosferica_min_na_hora_ant_aut_m_b': 'mean', 
+                'radiacao_global_kj_m': 'mean',
+                'temperatura_do_ar_bulbo_seco_horaria_c': 'mean',
+                'temperatura_do_ponto_de_orvalho_c': 'mean',
+                'temperatura_maxima_na_hora_ant_aut_c': 'mean',
+                'temperatura_minima_na_hora_ant_aut_c': 'mean',
+                'temperatura_orvalho_max_na_hora_ant_aut_c': 'mean',
+                'temperatura_orvalho_min_na_hora_ant_aut_c': 'mean',
+                'umidade_rel_max_na_hora_ant_aut_%': 'mean',
+                'umidade_rel_min_na_hora_ant_aut_%': 'mean', 
+                'umidade_relativa_do_ar_horaria_%': 'mean',
+                'vento_direcao_horaria_gr_gr': 'mean', 
+                'vento_rajada_maxima_m_s': 'mean',
+                'vento_velocidade_horaria_m_s': 'mean' 
+            }
+        df = self.data.reset_index().groupby("data_hora").agg(agg_dict)
+        if write:
+            df.to_parquet("inmet_data_agg.parquet")
+        return df
     
 
         
