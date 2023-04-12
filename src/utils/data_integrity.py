@@ -20,9 +20,9 @@ def check_date_range(data: pd.DataFrame, date_col_name: str, frequency: str, dat
     if missing_dates_:
         return "Datas faltantes: ", missing_dates_
     else:
-        return "Sem datas faltantes.", None
+        return "Sem datas faltantes."
     
-def input_missing_dates(data: pd.DataFrame, date_col_name: str, missing_dates_: list, date_is_index: bool) -> pd.DataFrameS:
+def input_missing_dates(data: pd.DataFrame, date_col_name: str, missing_dates_: list, date_is_index: bool) -> pd.DataFrame:
     """_summary_
 
     Args:
