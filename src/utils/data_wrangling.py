@@ -450,7 +450,7 @@ class inmet_data:
         else:
             pass
 
-    def read_parquet(self):
+    def read_parquet(self, final=True):
         """_summary_
 
         Args:
@@ -461,17 +461,20 @@ class inmet_data:
             _type_: _description_
         """
         path = None
-        df = pd.read_parquet("../data/inmet_data.parquet")
-        df = df.astype(self.col_types)
-        df.set_index(["estacao","data_hora"], inplace=True)
-        df.sort_index(inplace=True)
-        df.drop("index", axis=1, inplace=True)
-        idx = pd.IndexSlice
-        inicio = f"{self.ano_inicio}"
-        fim = f"{self.ano_fim}"
-        df2 = df.loc[idx[:, inicio:fim], :]
-        df2 = df[df2.regiao == "S"]
-        self.data = df
+        if final:
+            self.data = pd.read_parquet("../data/inmet_data_agg.parquet")
+        else:
+            df = pd.read_parquet("../data/inmet_data.parquet")
+            df = df.astype(self.col_types)
+            df.set_index(["estacao","data_hora"], inplace=True)
+            df.sort_index(inplace=True)
+            df.drop("index", axis=1, inplace=True)
+            idx = pd.IndexSlice
+            inicio = f"{self.ano_inicio}"
+            fim = f"{self.ano_fim}"
+            df2 = df.loc[idx[:, inicio:fim], :]
+            df2 = df[df2.regiao == "S"]
+            self.data = df
         #return df2
 
     def aggregate_by_hour(self, write=True):
