@@ -4,13 +4,12 @@ import shutil
 from io import BytesIO
 from typing import List
 from zipfile import ZipFile
-import funcs.logger as lg
-
+import utils.logger as lg
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
-
+#import mypy
 
 class ons_data:
     """Classe destinada à leitura dos dados de carga da ONS
@@ -33,7 +32,7 @@ class ons_data:
         self.seasonal_components = pd.DataFrame()
         #self.data_dt_inserted = pd.DataFrame()
         #self.data_treated = pd.DataFrame()
-        self.data_dir = "../../../data/"
+        self.data_dir = "../data/"
 
     def read(self) -> pd.DataFrame:
         """Função para ler arquivos "csv" já presentes no diretório de dados.
@@ -332,7 +331,7 @@ class inmet_data:
             ending = "".join(["_", str(espec)])
         else:
             ending = ""
-        df_.to_parquet(f"inmet/inmet_data{ending}.parquet")
+        df_.to_parquet(f"../data/inmet/inmet_data{ending}.parquet")
 
     def correct_dates(self, estacao, data, missing_dates, datas_estranhas=None, printer=False):
         y = data
@@ -375,7 +374,7 @@ class inmet_data:
     def fill_na(self, col: pd.Series) -> pd.Series:
         if ((col.dtype.kind in 'iu') or (col.dtype.kind in 'f')): # coluna é de int ou float
             roll_mean = col.rolling(window=30, min_periods=1).mean()
-            col = col.fillna(roll_mean).fillna(col.mean()).fillna(method="bfill")
+            col = col.fillna(roll_mean).fillna(col.mean())#.fillna(method="bfill")
         else:
             col = col.fillna(method="ffill").fillna(method="bfill")
         return col
@@ -384,13 +383,13 @@ class inmet_data:
         """Função que cria um diretório "inmet" no diretório atual e salva os arquivos tratados de cada ano nela
         para depois serem unificados e salvos pelo método "build_database".
         """
-
-        if "inmet" in os.listdir():
+        temp_path = "../data/"
+        if "inmet" in os.listdir(temp_path):
             print("Diretório 'inmet' já presente na pasta atual.")
             pass
         else:
             print("Criando diretório 'inmet' na pasta atual...")
-            os.mkdir("inmet")
+            os.mkdir(temp_path + "/inmet")
         df = pd.DataFrame()
         for ano in range(self.ano_inicio, self.ano_fim+1):
             print(f"Trabalhando nos dados de {ano}...")
@@ -407,9 +406,12 @@ class inmet_data:
                 #df02.drop(2,axis=0,inplace=True) #teste para ver se check_date_column funcion#
                 df02.rename(columns=self.columns_dict, inplace=True)
                 estacao = info.iloc[2,1]
+                regiao = info.iloc[0,1]
+                if regiao != "S":  # FILTRAR APENAS REGIÃO SUL
+                    continue
                 df02["estacao"] = estacao
                 df02["uf"] = info.iloc[1,1]
-                df02["regiao"] = info.iloc[0,1]
+                df02["regiao"] = regiao
                 for col in df02.columns:
                     df02.loc[:,col] = df02.loc[:,col].replace(",",".", regex=True)
                 df02 = df02.astype(self.col_types)
@@ -421,16 +423,19 @@ class inmet_data:
                 df02.drop(["data", "hora"], axis=1, inplace=True)
                 df02.replace(-9999, np.nan, inplace=True)
                 lg.log_data_info(estacao=estacao, ano=ano, nans=df02.isna().sum().sum())
+                df02 = self.check_date_column(estacao=estacao, data_=df02, ano=ano)
                 for col in df02.columns:
                     df02.loc[:,col] = self.fill_na(df02[col])
-                df02 = self.check_date_column(estacao=estacao, data_=df02, ano=ano)
+                #df02 = self.check_date_column(estacao=estacao, data_=df02, ano=ano)
                 lg.log_data_info(estacao=estacao, ano=ano, nans=df02.isna().sum().sum())
                 #print("DATA PARA CHECK:", df02.iloc[2])
                 df01 = pd.concat([df01, df02])
+            df01.sort_values(by=["estacao", "data_hora"])
             self.write_parquet(df01, espec=ano)
 
     def build_database(self, delete_partial_data=True):
-        files = ["".join(["inmet/", file]) for file in os.listdir("inmet")]
+        temp_path = "../data/inmet/"
+        files = ["".join([temp_path, file]) for file in os.listdir(temp_path)]
         df = pd.DataFrame()
         for file in files:
             print(f"Concatenando arquivo: {file}")
@@ -438,21 +443,61 @@ class inmet_data:
             df0 = df0.astype(self.col_types)
             df = pd.concat([df,df0])
         #df.set_index(["estacao","data_hora"], inplace=True)
-        df.to_parquet("inmet_data.parquet")
+        df.to_parquet("../data/inmet_data.parquet")
         print("Arquivo 'inmet_data.parquet' salvo no diretório atual. Deletando pasta 'inmet'.")
         if delete_partial_data:
-            shutil.rmtree("inmet")
+            shutil.rmtree(temp_path)
         else:
             pass
 
     def read_parquet(self):
+        """_summary_
+
+        Args:
+            start (int, optional): _description_. Defaults to self.data_inicio.
+            end (int, optional): _description_. Defaults to self.data_fim.
+
+        Returns:
+            _type_: _description_
+        """
         path = None
-        df = pd.read_parquet("inmet_data.parquet")
+        df = pd.read_parquet("../data/inmet_data.parquet")
         df = df.astype(self.col_types)
         df.set_index(["estacao","data_hora"], inplace=True)
+        df.sort_index(inplace=True)
+        df.drop("index", axis=1, inplace=True)
+        idx = pd.IndexSlice
+        inicio = f"{self.ano_inicio}"
+        fim = f"{self.ano_fim}"
+        df2 = df.loc[idx[:, inicio:fim], :]
+        df2 = df[df2.regiao == "S"]
         self.data = df
-        return df
+        #return df2
 
+    def aggregate_by_hour(self, write=True):
+        agg_dict = {
+                'precipitacao_total_horario_mm': 'sum',
+                'pressao_atmosferica_ao_nivel_da_estacao_horaria_m_b': 'mean',
+                'pressao_atmosferica_max_na_hora_ant_aut_m_b': 'mean',
+                'pressao_atmosferica_min_na_hora_ant_aut_m_b': 'mean', 
+                'radiacao_global_kj_m': 'mean',
+                'temperatura_do_ar_bulbo_seco_horaria_c': 'mean',
+                'temperatura_do_ponto_de_orvalho_c': 'mean',
+                'temperatura_maxima_na_hora_ant_aut_c': 'mean',
+                'temperatura_minima_na_hora_ant_aut_c': 'mean',
+                'temperatura_orvalho_max_na_hora_ant_aut_c': 'mean',
+                'temperatura_orvalho_min_na_hora_ant_aut_c': 'mean',
+                'umidade_rel_max_na_hora_ant_aut_%': 'mean',
+                'umidade_rel_min_na_hora_ant_aut_%': 'mean', 
+                'umidade_relativa_do_ar_horaria_%': 'mean',
+                'vento_direcao_horaria_gr_gr': 'mean', 
+                'vento_rajada_maxima_m_s': 'mean',
+                'vento_velocidade_horaria_m_s': 'mean' 
+            }
+        df = self.data.reset_index().groupby("data_hora").agg(agg_dict)
+        if write:
+            df.to_parquet("../data/inmet_data_agg.parquet")
+        return df
     
 
         
