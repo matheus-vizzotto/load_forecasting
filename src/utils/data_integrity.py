@@ -40,3 +40,31 @@ def input_missing_dates(data: pd.DataFrame, date_col_name: str, missing_dates_: 
     missing = pd.DataFrame(missing_dates_, columns=[f"{date_col_name}"])
     y = pd.concat([y, missing], ignore_index=True).sort_values(by=date_col_name)
     return y
+
+def check_outliers(data: pd.Series, method='desvpad') -> pd.Series:
+    if method == 'desvpad':
+            window = 24*7
+            n_std = 1
+            outlier = np.where( (data > data+(n_std*data.rolling(window).std())) | (data < data-(n_std*data.rolling(window).std()),1,0) )
+    return outlier
+
+def merge_dataframes(data1: pd.DataFrame, data2: pd.DataFrame, date1: str, date2: str, dt_min, dt_max, freq_='h') -> pd.DataFrame:
+    """Função que gera um intervalo de datas entre dt_min e dt_max com a frequência freq para depois 
+    fazer join com as tabelas data1 e data2
+
+    Args:
+        data1 (pd.DataFrame): _description_
+        data2 (pd.DataFrame): _description_
+        date1 (str): _description_
+        date2 (str): _description_
+        dt_min (_type_): _description_
+        dt_max (_type_): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    pass
+    # dt_range = pd.date_range(dt_min, dt_max, freq=freq_)
+    # df1 = pd.merge(dt_range, data1, left_on = "data", right_on=date1, how='outer')
+    # df2 = pd.merge(df1, data2, left_on=date1, right_on=date2, how='outer')
+    # return df2
