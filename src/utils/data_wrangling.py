@@ -500,7 +500,8 @@ class inmet_data:
         df = self.data.reset_index().groupby("data_hora").agg(agg_dict)
         if write:
             df.to_parquet("../data/inmet_data_agg.parquet")
-        return df
+        else:
+            return df
     
 
         

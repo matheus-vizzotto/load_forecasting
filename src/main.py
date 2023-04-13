@@ -32,6 +32,8 @@ print(os.getcwd())
 # print(df.dtypes)
 
 
+os.getcwd()
+
 data = dw.ons_data(ano_inicio=2000, ano_fim=2023, freq='h', idreg='S')
 data.read()
 df_load = data.data["load_mwmed"]
