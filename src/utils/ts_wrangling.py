@@ -25,3 +25,17 @@ def train_test_split(df: pd.DataFrame, test: int, multivariate=False, y_col: str
         return train_x, train_y, test_x, test_y
     else:
         return train, test
+    
+def to_supervised_frame(df: pd.DataFrame, y_col: str, n_in: int= 1, n_out: int=1, dropnan: bool=True) -> pd.DataFrame:
+    """Função que transforma dados univariados para o formato tabular com base nos lags.
+
+    Args:
+        df (pd.DataFrame): _description_
+        n_in (int, optional): _description_. Defaults to 1.
+        n_out (int, optional): _description_. Defaults to 1.
+        dropnan (bool, optional): _description_. Defaults to True.
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    pass
