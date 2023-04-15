@@ -52,7 +52,7 @@ def plot_with_confidence(data: pd.DataFrame,
         cols = [x for x in data.columns if f"{ic}" in x]
         plt.fill_between(data[x_], data[cols[1]], data[cols[0]], alpha=alpha, label=f"IC -{ic}%", color=color)
     plt.title(title_)
-    plt.legend(bbox_to_anchor = (1.15,1))
+    plt.legend(bbox_to_anchor = (1.10,1))
     if save:
         plt.savefig(f"../figs/{title_}.png")
     else:
