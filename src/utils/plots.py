@@ -46,11 +46,10 @@ def plot_with_confidence(data: pd.DataFrame,
     """
     plt.figure(figsize=(15,5))
     plt.plot(data[x_], data[y_], color="black", label="Forecast")
-    if test:
-        plt.scatter(test, color="black", label="Observado")
+    if test is not None:
+        plt.scatter(x=test.index, y=test, color="green", label="Observado")
     for ic in levels:
         cols = [x for x in data.columns if f"{ic}" in x]
-        print(cols)
         plt.fill_between(data[x_], data[cols[1]], data[cols[0]], alpha=alpha, label=f"IC -{ic}%", color=color)
     plt.title(title_)
     plt.legend(bbox_to_anchor = (1.15,1))
