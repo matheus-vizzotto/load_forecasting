@@ -39,3 +39,18 @@ def to_supervised_frame(df: pd.DataFrame, y_col: str, n_in: int= 1, n_out: int=1
         pd.DataFrame: _description_
     """
     pass
+
+def extract_model_cols(data: pd.DataFrame, model: str, date_col_name: str="ds") -> pd.DataFrame:
+    """Retorna um Dataframe com todas as colunas de um Dataframe que contenha o nome
+    de um modelo e também o campo de data. Útil para quando se tem um Dataframe com
+    colunas de intervalo de confiança: ['AutoARIMA', 'AutoARIMA-lo-90', 'AutoARIMA-hi-90'].
+
+    Args:
+        data (pd.DataFrame): _description_
+        model (str): _description_
+
+    Returns:
+        pd.DataFrame: Dataframe apenas com as informações do modelo especificado.
+    """
+    model_cols = data[[x for x in data.columns if model in x or date_col_name in x]]
+    return model_cols

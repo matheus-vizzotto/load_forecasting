@@ -20,8 +20,9 @@ def plot_ts(x_: pd.Series, y_: pd.Series, title_=None, save=False):
     else:
         plt.show()
 
-def plot_with_confidence(data: pd.DataFrame, x_: str, y_: str, levels: list=[90],title_=None, save=False):
-    """_summary_
+def plot_with_confidence(data: pd.DataFrame, x_: str, y_: str, levels: list=[90], title_=None, color: str='darkblue', alpha=.2, test: pd.Series=None, save=False):
+    """Plota forecast junto com os intervalos de confiança. Importante: é necessário que os ICs estejam
+    especificados no nome da coluna (ex.: ['AutoARIMA-lo-90', 'AutoARIMA-hi-90'])
 
     Args:
         y_ (pd.DataFrame): Dataframe com observado e ICs
@@ -31,11 +32,14 @@ def plot_with_confidence(data: pd.DataFrame, x_: str, y_: str, levels: list=[90]
         save (bool, optional): _description_. Defaults to False.
     """
     plt.figure(figsize=(15,5))
-    sns.lineplot(x=data[x_], y=data[y_])
+    plt.plot(data[x_], data[y_], color="black")
+    if test:
+        plt.scatter(data[x_], data[y_], color="black")
     for ic in levels:
-        cols = [x for x in data.columns if f"{ic}" in data.columns]
+        cols = [x for x in data.columns if f"{ic}" in x]
         print(cols)
-        plt.fill_between(data[x_], cols[0], cols[1], alpha=0.2, label=f"IC -{ic:%}%")
+        plt.fill_between(data[x_], data[cols[1]], data[cols[0]], alpha=0.2, label=f"IC -{ic}%", color=color)
+    plt.title(title_)
     plt.legend(bbox_to_anchor = (1.15,1))
     plt.show()
 
