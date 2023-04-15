@@ -2,7 +2,9 @@ import pandas as pd
 import numpy as np
 import os
 
-def check_date_range(data: pd.DataFrame, date_col_name: str, frequency: str):
+def check_date_range(data: pd.DataFrame, 
+                     date_col_name: str, 
+                     frequency: str):
     """_summary_
 
     Args:
@@ -22,7 +24,10 @@ def check_date_range(data: pd.DataFrame, date_col_name: str, frequency: str):
     else:
         return "Sem datas faltantes.", None
     
-def input_missing_dates(data_: pd.DataFrame, date_col_name: str, freq: str, date_is_index: bool) -> pd.DataFrame:
+def input_missing_dates(data_: pd.DataFrame, 
+                        date_col_name: str, 
+                        freq: str, 
+                        date_is_index: bool) -> pd.DataFrame:
     """Verifica se há datas faltantes no dataframe e, no caso positivo, as inclui no original, deixando as
     demais colunas com NaN.
 
@@ -43,7 +48,17 @@ def input_missing_dates(data_: pd.DataFrame, date_col_name: str, freq: str, date
     y = pd.concat([y, missing], ignore_index=True).sort_values(by=date_col_name)
     return msg, y
 
-def check_outliers(data: pd.Series, method='desvpad') -> pd.Series:
+def check_outliers(data: pd.Series, 
+                   method='desvpad') -> pd.Series:
+    """_summary_
+
+    Args:
+        data (pd.Series): _description_
+        method (str, optional): _description_. Defaults to 'desvpad'.
+
+    Returns:
+        pd.Series: _description_
+    """
     if method == 'desvpad':
         window = 24*7
         n_std = 2

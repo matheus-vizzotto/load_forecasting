@@ -1,7 +1,10 @@
 import pandas as pd
 import os
 
-def train_test_split(df: pd.DataFrame, test: int, multivariate=False, y_col: str=None) -> pd.DataFrame:
+def train_test_split(df: pd.DataFrame, 
+                     test: int, 
+                     multivariate=False, 
+                     y_col: str=None) -> pd.DataFrame:
     """Função para particionar dataframes uni ou multivariados
 
     Args:
@@ -26,7 +29,11 @@ def train_test_split(df: pd.DataFrame, test: int, multivariate=False, y_col: str
     else:
         return train, test
     
-def to_supervised_frame(df: pd.DataFrame, y_col: str, n_in: int= 1, n_out: int=1, dropnan: bool=True) -> pd.DataFrame:
+def to_supervised_frame(df: pd.DataFrame, 
+                        y_col: str, 
+                        n_in: int= 1, 
+                        n_out: int=1, 
+                        dropnan: bool=True) -> pd.DataFrame:
     """Função que transforma dados univariados para o formato tabular com base nos lags.
 
     Args:
@@ -40,7 +47,9 @@ def to_supervised_frame(df: pd.DataFrame, y_col: str, n_in: int= 1, n_out: int=1
     """
     pass
 
-def extract_model_cols(data: pd.DataFrame, model: str, date_col_name: str="ds") -> pd.DataFrame:
+def extract_model_cols(data: pd.DataFrame, 
+                       model: str, 
+                       date_col_name: str="ds") -> pd.DataFrame:
     """Retorna um Dataframe com todas as colunas de um Dataframe que contenha o nome
     de um modelo e também o campo de data. Útil para quando se tem um Dataframe com
     colunas de intervalo de confiança: ['AutoARIMA', 'AutoARIMA-lo-90', 'AutoARIMA-hi-90'].

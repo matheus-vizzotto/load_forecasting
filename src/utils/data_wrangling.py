@@ -14,7 +14,11 @@ import requests
 class ons_data:
     """Classe destinada à leitura dos dados de carga da ONS
     """
-    def __init__(self, freq: str, ano_inicio: int, ano_fim: int, idreg: str=None):
+    def __init__(self, 
+                 freq: str, 
+                 ano_inicio: int, 
+                 ano_fim: int, 
+                 idreg: str=None):
         """
         Args:
             freq (str): frequência da série. ["h","d"]
@@ -58,7 +62,9 @@ class ons_data:
         self.data = df
         #return df
 
-    def update(self, printer=False, write: bool=False) -> pd.DataFrame:
+    def update(self, 
+               printer=False, 
+               write: bool=False) -> pd.DataFrame:
         """Função para atualizar os arquivos no diretório de dados.
 
         Args:
@@ -114,7 +120,8 @@ class ons_data:
         else:
             print("Ano não disponível.")
     
-    def check_date_column(self, printer=True) -> List[dt.datetime]:
+    def check_date_column(self, 
+                          printer=True) -> List[dt.datetime]:
         """Verifica datas faltantes no intervalo
 
         Args:
@@ -136,7 +143,13 @@ class ons_data:
         self.missing_dates = missing_list
         #return missing_list
     
-    def correct_dates(self, printer=False):
+    def correct_dates(self, 
+                      printer=False):
+        """_summary_
+
+        Args:
+            printer (bool, optional): _description_. Defaults to False.
+        """
         y = self.data
         if printer:
             print(f"Inserindo {len(self.missing_dates)} datas.\nRetirando {len(self.datas_estranhas)} datas.")
@@ -152,11 +165,21 @@ class ons_data:
         #return y
     
     def remove_outliers(self: pd.DataFrame) -> pd.DataFrame:
+        """_summary_
+
+        Args:
+            self (pd.DataFrame): _description_
+
+        Returns:
+            pd.DataFrame: _description_
+        """
         y = self.data
         y.loc[:,"load_mwmed"] = np.where(y.loc[:,"load_mwmed"] <= 0, np.nan, y.loc[:,"load_mwmed"])
         self.data = y
 
-    def fill_na(self, _method: str, printer=False):
+    def fill_na(self, 
+                _method: str, 
+                printer=False):
         """Preenche valores vazios.
         Args:
             _method (str): método para preencher os valores vazios. ["linear", "nearest", "spline", "polynomial"]
@@ -171,7 +194,13 @@ class ons_data:
         self.data = data
         return data
 
-    def get_data_description(self, plot=False):
+    def get_data_description(self, 
+                             plot=False):
+        """_summary_
+
+        Args:
+            plot (bool, optional): _description_. Defaults to False.
+        """
         data = self.data
         print(data.describe(include='all'))
         print(data.info())
@@ -190,6 +219,8 @@ class ons_data:
             plt.show()
 
     def get_seasonal_components(self):
+        """_summary_
+        """
         x0 = self.data
         x = x0.reset_index()
         y = pd.DataFrame()
@@ -206,7 +237,8 @@ class ons_data:
         self.seasonal_components = y
 
     
-def pipeline(x, update=False) -> pd.DataFrame:
+def pipeline(x, 
+             update=False) -> pd.DataFrame:
     """Função que aplica o tratamento de dados na classe ons_data.
 
     Args:
@@ -230,7 +262,9 @@ def pipeline(x, update=False) -> pd.DataFrame:
     return df
     #df.describe(include=category)
 
-def prepare_statsforecast_df(x: pd.DataFrame, unique_id: str, date_is_index=True) -> pd.DataFrame:
+def prepare_statsforecast_df(x: pd.DataFrame, 
+                             unique_id: str, 
+                             date_is_index=True) -> pd.DataFrame:
     """Função para transformar um DataFrame para o formato utilizado pelos algoritmos do pacote statsforecast (Nixtla)
 
     Args:
@@ -250,7 +284,9 @@ def prepare_statsforecast_df(x: pd.DataFrame, unique_id: str, date_is_index=True
 
 
 class inmet_data:
-    def __init__(self, ano_inicio: int, ano_fim: int):
+    def __init__(self, 
+                 ano_inicio: int, 
+                 ano_fim: int):
         """_summary_
 
         Args:
@@ -313,7 +349,16 @@ class inmet_data:
                         'regiao': 'category'
                     } 
         
-    def ajusta_hora(self, x):
+    def ajusta_hora(self, 
+                    x) -> str:
+        """_summary_
+
+        Args:
+            x (_type_): _description_
+
+        Returns:
+            str: _description_
+        """
         if ":" in x:
             y = x
         elif "UTC" in x:
@@ -322,21 +367,55 @@ class inmet_data:
             y = None
         return y
 
-    def converte_data(self, x):
+    def converte_data(self, 
+                      x) -> dt.datetime:
+        """_summary_
+
+        Args:
+            x (_type_): _description_
+
+        Returns:
+            dt.datetime: _description_
+        """
         try:
             y = pd.to_datetime(x, format = '%Y-%m-%d %H:%M:%S')
         except:
             y = pd.to_datetime(x, format = '%Y/%m/%d %H:%M:%S')
         return y
     
-    def write_parquet(self, df_, espec=None):
+    def write_parquet(self, 
+                      df_, 
+                      espec=None):
+        """_summary_
+
+        Args:
+            df_ (_type_): _description_
+            espec (_type_, optional): _description_. Defaults to None.
+        """
         if espec:
             ending = "".join(["_", str(espec)])
         else:
             ending = ""
         df_.to_parquet(f"../data/inmet/inmet_data{ending}.parquet")
 
-    def correct_dates(self, estacao, data, missing_dates, datas_estranhas=None, printer=False):
+    def correct_dates(self, 
+                      estacao: str, 
+                      data: pd.DataFrame, 
+                      missing_dates: list, 
+                      datas_estranhas=None, 
+                      printer: bool=False):
+        """_summary_
+
+        Args:
+            estacao (str): _description_
+            data (pd.DataFrame): _description_
+            missing_dates (list): _description_
+            datas_estranhas (_type_, optional): _description_. Defaults to None.
+            printer (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            _type_: _description_
+        """
         y = data
         if printer:
             print(f"Inserindo {len(missing_dates)} datas.\nRetirando {len(datas_estranhas)} datas.")
@@ -351,7 +430,11 @@ class inmet_data:
         #y.set_index(["estacao","data_hora"], inplace=True)
         return y
 
-    def check_date_column(self, estacao, data_, printer=True, ano=None) -> List[dt.datetime]:
+    def check_date_column(self, 
+                          estacao, 
+                          data_, 
+                          printer=True, 
+                          ano=None) -> List[dt.datetime]:
         """Verifica datas faltantes no intervalo
 
         Args:
@@ -374,7 +457,16 @@ class inmet_data:
         lg.log_dates(estacao=estacao, missing_dates=missing_dates, datas_estranhas=datas_estranhas, ano=ano)
         return self.correct_dates(data=data_, estacao = estacao, missing_dates=missing_dates, datas_estranhas=datas_estranhas)
     
-    def fill_na(self, col: pd.Series) -> pd.Series:
+    def fill_na(self, 
+                col: pd.Series) -> pd.Series:
+        """_summary_
+
+        Args:
+            col (pd.Series): _description_
+
+        Returns:
+            pd.Series: _description_
+        """
         if ((col.dtype.kind in 'iu') or (col.dtype.kind in 'f')): # coluna é de int ou float
             roll_mean = col.rolling(window=30, min_periods=1).mean()
             col = col.fillna(roll_mean).fillna(col.mean())#.fillna(method="bfill")
@@ -436,7 +528,13 @@ class inmet_data:
             df01.sort_values(by=["estacao", "data_hora"])
             self.write_parquet(df01, espec=ano)
 
-    def build_database(self, delete_partial_data=True):
+    def build_database(self, 
+                       delete_partial_data=True):
+        """_summary_
+
+        Args:
+            delete_partial_data (bool, optional): _description_. Defaults to True.
+        """
         temp_path = "../data/inmet/"
         files = ["".join([temp_path, file]) for file in os.listdir(temp_path)]
         df = pd.DataFrame()
@@ -480,7 +578,16 @@ class inmet_data:
             self.data = df
         #return df2
 
-    def aggregate_by_hour(self, write=True):
+    def aggregate_by_hour(self, 
+                          write=True):
+        """_summary_
+
+        Args:
+            write (bool, optional): _description_. Defaults to True.
+
+        Returns:
+            _type_: _description_
+        """
         agg_dict = {
                 'precipitacao_total_horario_mm': 'sum',
                 'pressao_atmosferica_ao_nivel_da_estacao_horaria_m_b': 'mean',
