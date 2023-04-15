@@ -63,7 +63,7 @@ def compare_models(df: pd.DataFrame,
     sf.fit(df_sf)
     forecasts_df = sf.forecast(h=h_, level=level)
     #forecasts_df_final = forecasts_df[["ds", "AutoARIMA"]]
-    return forecasts_df
+    return sf, forecasts_df
 
 
 def auto_arima_model(df: pd.DataFrame, 
@@ -129,10 +129,10 @@ def crossval(sf: StatsForecast,
         step_size=step_size,
         n_windows=windows
         )
-    return crossvalidation_df()
+    return crossvalidation_df
 
 def crossval_summary_table(crossvalidation_df: pd.DataFrame, 
-                           metrics: list) -> pd.DataFrame:
+                           metrics: list=None) -> pd.DataFrame:
     """_summary_
 
     Args:
@@ -142,6 +142,14 @@ def crossval_summary_table(crossvalidation_df: pd.DataFrame,
     Returns:
         pd.DataFrame: _description_
     """
+    metrics = [
+            mean_absolute_error,
+            mean_squared_error,
+            mean_squared_error,
+            mean_absolute_percentage_error,
+            r2_score,
+            MeanAbsolutePercentageError(symmetric=True)
+            ]
     metrics_df = pd.DataFrame()
     for metric in metrics:
         evaluation_df = evaluate_cross_validation(crossvalidation_df, metric)
@@ -150,4 +158,6 @@ def crossval_summary_table(crossvalidation_df: pd.DataFrame,
         except:
             evaluation_df["metric"] = type(metric).__name__
         metrics_df = pd.concat([metrics_df, evaluation_df])
-        return metrics_df
+    summary_df = metrics_df.groupby('best_model').size().sort_values().to_frame()
+    #summary_df.reset_index().columns = ["Model", "Nr. of unique_ids"]
+    return metrics_df, summary_df
