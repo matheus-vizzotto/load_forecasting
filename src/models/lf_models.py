@@ -94,18 +94,6 @@ def auto_arima_model(df: pd.DataFrame,
     forecasts_df_final = forecasts_df[["ds", "AutoARIMA"]]
     return forecasts_df_final
 
-def evaluate_cross_validation(df, metric):
-    models = df.drop(columns=['ds', 'cutoff', 'y']).columns.tolist()
-    evals = []
-    for model in models:
-        eval_ = df.groupby(['unique_id', 'cutoff']).apply(lambda x: metric(x['y'].values, x[model].values)).to_frame() # Calculate loss for every unique_id, model and cutoff.
-        eval_.columns = [model]
-        evals.append(eval_)
-    evals = pd.concat(evals, axis=1)
-    evals = evals.groupby(['unique_id']).mean(numeric_only=True) # Averages the error metrics for all cutoffs for every combination of model and unique_id
-    evals['best_model'] = evals.idxmin(axis=1)
-    return evals
-
 def crossval(sf: StatsForecast, 
              data: pd.DataFrame, 
              h: int=24, 
@@ -130,6 +118,27 @@ def crossval(sf: StatsForecast,
         n_windows=windows
         )
     return crossvalidation_df
+
+def evaluate_cross_validation(df, metric):
+    """_summary_
+
+    Args:
+        df (_type_): _description_
+        metric (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    models = df.drop(columns=['ds', 'cutoff', 'y']).columns.tolist()
+    evals = []
+    for model in models:
+        eval_ = df.groupby(['unique_id', 'cutoff']).apply(lambda x: metric(x['y'].values, x[model].values)).to_frame() # Calculate loss for every unique_id, model and cutoff.
+        eval_.columns = [model]
+        evals.append(eval_)
+    evals = pd.concat(evals, axis=1)
+    evals = evals.groupby(['unique_id']).mean(numeric_only=True) # Averages the error metrics for all cutoffs for every combination of model and unique_id
+    evals['best_model'] = evals.idxmin(axis=1)
+    return evals
 
 def crossval_summary_table(crossvalidation_df: pd.DataFrame, 
                            metrics: list=None) -> pd.DataFrame:
