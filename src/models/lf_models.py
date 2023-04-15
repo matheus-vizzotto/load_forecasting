@@ -2,6 +2,10 @@ import pandas as pd
 from statsforecast import StatsForecast
 from statsforecast.models import AutoARIMA
 from utils.data_wrangling import prepare_statsforecast_df
+import fbprophet
+from fbprophet.diagnostics import cross_validation
+import datetime as dt
+import matplotlib.pyplot as plt
 
 # MODELOS
 from statsforecast import StatsForecast
@@ -170,3 +174,60 @@ def crossval_summary_table(crossvalidation_df: pd.DataFrame,
     summary_df = metrics_df.groupby('best_model').size().sort_values().to_frame()
     #summary_df.reset_index().columns = ["Model", "Nr. of unique_ids"]
     return metrics_df, summary_df
+
+def prophet_model(data: pd.DataFrame, 
+                  date_col: str, 
+                  y_col: str, 
+                  horizon: int, 
+                  test: pd.DataFrame=None,
+                  frequency: str='h'):
+    """_summary_
+
+    Args:
+        data (pd.DataFrame): _description_
+        date_col (str): _description_
+        y_col (str): _description_
+        horizon (int): _description_
+        test (pd.DataFrame, optional): _description_. Defaults to None.
+        frequency (str, optional): _description_. Defaults to 'h'.
+
+    Returns:
+        _type_: _description_
+    """
+def prophet_model(data: pd.DataFrame, 
+                  date_col: str, 
+                  y_col: str, 
+                  horizon: int, 
+                  test: pd.DataFrame=None,
+                  frequency: str='h'):
+    """_summary_
+
+    Args:
+        data (pd.DataFrame): _description_
+        date_col (str): _description_
+        y_col (str): _description_
+        horizon (int): _description_
+        test (pd.DataFrame, optional): _description_. Defaults to None.
+        frequency (str, optional): _description_. Defaults to 'h'.
+
+    Returns:
+        _type_: _description_
+    """
+    df = data[[date_col,y_col]]
+    df.rename(columns={
+                date_col: 'ds', 
+                y_col: 'y'
+                }, inplace=True)
+    #print(df)
+    model = fbprophet.Prophet(daily_seasonality=True, weekly_seasonality=True, yearly_seasonality=True)
+    model.fit(df)
+    future_fbp = model.make_future_dataframe(periods=horizon, freq=frequency, include_history=False)
+    forecast = model.predict(future_fbp)
+    plt.figure(figsize=(15,5))
+    plt.plot(forecast['ds'], forecast.yhat, label="Forecast")
+    plt.fill_between(forecast['ds'], forecast['yhat_upper'], forecast['yhat_lower'], alpha=.2, color="darkblue")
+    if test is not None:
+        plt.scatter(test[date_col], test[y_col], label="Observado")
+    plt.legend()
+    plt.show()
+    return forecast
