@@ -96,7 +96,7 @@ def auto_arima_model(df: pd.DataFrame,
     sf.fit(df_sf)
     forecasts_df = sf.forecast(h=h_, level=level)
     forecasts_df_final = forecasts_df[["ds", "AutoARIMA"]]
-    return forecasts_df_final
+    return sf, forecasts_df_final 
 
 def crossval(sf: StatsForecast, 
              data: pd.DataFrame, 
