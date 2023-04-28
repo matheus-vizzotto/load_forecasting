@@ -17,7 +17,7 @@ df_load = df_load.iloc[-PERIOD:,:]
 train, test = tw.train_test_split(df_load, test=HORIZON)
 
 
-fc = prophet_model(data=train, horizon=HORIZON, test=test["load_mwmed"])
+fc = prophet_model(data=train, horizon=HORIZON, test=test["load_mwmed"], save_model=True)
 
 
 # COLOCAR RESTANTE DOS MODELOS
