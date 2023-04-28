@@ -3,6 +3,7 @@ import os
 import shutil
 from io import BytesIO
 from typing import List
+from typing import Optional
 from zipfile import ZipFile
 import utils.logger as lg
 import matplotlib.pyplot as plt
@@ -18,7 +19,8 @@ class ons_data:
                  freq: str, 
                  ano_inicio: int, 
                  ano_fim: int, 
-                 idreg: str=None):
+                 #idreg: str=None):
+                 idreg: Optional[str]):
         """
         Args:
             freq (str): frequência da série. ["h","d"]
@@ -31,12 +33,12 @@ class ons_data:
         self.ano_fim = ano_fim
         self.idreg = idreg
         self.data = pd.DataFrame()
-        self.missing_dates = []
-        self.datas_estranhas = []
+        self.missing_dates : List[dt.datetime] = []
+        self.datas_estranhas : List[dt.datetime] = []
         self.seasonal_components = pd.DataFrame()
         #self.data_dt_inserted = pd.DataFrame()
         #self.data_treated = pd.DataFrame()
-        self.data_dir = "../data/"
+        self.data_dir = "../data/processed/"
 
     def read(self) -> pd.DataFrame:
         """Função para ler arquivos "csv" já presentes no diretório de dados.
@@ -141,7 +143,7 @@ class ons_data:
             print("Datas estranhas (retirar):\n", dts_extras)
         self.datas_estranhas = dts_extras
         self.missing_dates = missing_list
-        #return missing_list
+        return missing_list
     
     def correct_dates(self, 
                       printer=False):
@@ -396,7 +398,7 @@ class inmet_data:
             ending = "".join(["_", str(espec)])
         else:
             ending = ""
-        df_.to_parquet(f"../data/inmet/inmet_data{ending}.parquet")
+        df_.to_parquet(f"../data/processed/inmet/inmet_data{ending}.parquet")
 
     def correct_dates(self, 
                       estacao: str, 
@@ -478,7 +480,7 @@ class inmet_data:
         """Função que cria um diretório "inmet" no diretório atual e salva os arquivos tratados de cada ano nela
         para depois serem unificados e salvos pelo método "build_database".
         """
-        temp_path = "../data/"
+        temp_path = "../data/interim/"
         if "inmet" in os.listdir(temp_path):
             print("Diretório 'inmet' já presente na pasta atual.")
             pass
@@ -529,13 +531,13 @@ class inmet_data:
             self.write_parquet(df01, espec=ano)
 
     def build_database(self, 
-                       delete_partial_data=True):
+                       delete_partial_data=False):
         """_summary_
 
         Args:
             delete_partial_data (bool, optional): _description_. Defaults to True.
         """
-        temp_path = "../data/inmet/"
+        temp_path = "../data/interim/inmet/"
         files = ["".join([temp_path, file]) for file in os.listdir(temp_path)]
         df = pd.DataFrame()
         for file in files:
@@ -563,9 +565,9 @@ class inmet_data:
         """
         path = None
         if final:
-            self.data = pd.read_parquet("../data/inmet_data_agg.parquet")
+            self.data = pd.read_parquet("../data/processed/inmet_data_agg.parquet")
         else:
-            df = pd.read_parquet("../data/inmet_data.parquet")
+            df = pd.read_parquet("../data/processed/inmet_data.parquet")
             df = df.astype(self.col_types)
             df.set_index(["estacao","data_hora"], inplace=True)
             df.sort_index(inplace=True)
@@ -609,7 +611,7 @@ class inmet_data:
             }
         df = self.data.reset_index().groupby("data_hora").agg(agg_dict)
         if write:
-            df.to_parquet("../data/inmet_data_agg.parquet")
+            df.to_parquet("../data/processed/inmet_data_agg.parquet")
         else:
             return df
     

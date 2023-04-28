@@ -175,25 +175,25 @@ def crossval_summary_table(crossvalidation_df: pd.DataFrame,
     #summary_df.reset_index().columns = ["Model", "Nr. of unique_ids"]
     return metrics_df, summary_df
 
-def prophet_model(data: pd.DataFrame, 
-                  date_col: str, 
-                  y_col: str, 
-                  horizon: int, 
-                  test: pd.DataFrame=None,
-                  frequency: str='h'):
-    """_summary_
+# def prophet_model(data: pd.DataFrame, 
+#                   date_col: str, 
+#                   y_col: str, 
+#                   horizon: int, 
+#                   test: pd.DataFrame=None,
+#                   frequency: str='h'):
+#     """_summary_
 
-    Args:
-        data (pd.DataFrame): _description_
-        date_col (str): _description_
-        y_col (str): _description_
-        horizon (int): _description_
-        test (pd.DataFrame, optional): _description_. Defaults to None.
-        frequency (str, optional): _description_. Defaults to 'h'.
+#     Args:
+#         data (pd.DataFrame): _description_
+#         date_col (str): _description_
+#         y_col (str): _description_
+#         horizon (int): _description_
+#         test (pd.DataFrame, optional): _description_. Defaults to None.
+#         frequency (str, optional): _description_. Defaults to 'h'.
 
-    Returns:
-        _type_: _description_
-    """
+#     Returns:
+#         _type_: _description_
+#     """
 def prophet_model(data: pd.DataFrame, 
                   date_col: str, 
                   y_col: str, 
