@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from typing import List
 from datetime import datetime
 import joblib
+from paths import PATHS
+import os
 
 def prepare_prophet_df(data: pd.DataFrame, 
                        cols: List[str],
@@ -24,7 +26,7 @@ def prophet_model(data: pd.DataFrame,
                   test: pd.Series=None,
                   frequency: str='h',
                   write: bool=True,
-                  save_model=False):
+                  save_model=False) -> pd.DataFrame:
     """_summary_
 
     Args:
@@ -56,8 +58,10 @@ def prophet_model(data: pd.DataFrame,
     plt.legend()
     plt.show()
     if write:
-        now = datetime.now().strftime("%Y%m%d%H%M%S")
-        forecast.to_parquet(f"../data/forecasts/prophet_fc_{now}.parquet")
+        now = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_path = os.path.join(PATHS["forecasts_data"], f"prophet_fc_{now}.parquet")
+        forecast.to_parquet(file_path)
+        #forecast.to_parquet(f"../data/04_forecasts/prophet_fc_{now}.parquet")
     if save_model:
         joblib.dump(model, '../models/prophet_joblib')
     return forecast

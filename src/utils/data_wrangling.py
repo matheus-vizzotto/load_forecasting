@@ -38,7 +38,7 @@ class ons_data:
         self.seasonal_components = pd.DataFrame()
         #self.data_dt_inserted = pd.DataFrame()
         #self.data_treated = pd.DataFrame()
-        self.data_dir = "../data/processed/"
+        self.data_dir = "../data/03_processed/"
 
     def read(self) -> pd.DataFrame:
         """Função para ler arquivos "csv" já presentes no diretório de dados.
