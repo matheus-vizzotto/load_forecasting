@@ -7,7 +7,9 @@ from statsforecast.models import AutoARIMA
 from datetime import datetime
 import os
 import joblib
+from paths import PATHS
 
+FORECASTS_FIG_DIR = PATHS['forecasts_figs']
 
 
 def auto_arima_model(data: pd.Series,
@@ -46,7 +48,8 @@ def auto_arima_model(data: pd.Series,
         plt.scatter(test.index, test, label="Observado")
     plt.title("AutoARIMA")
     plt.legend()
-    plt.show()
+    plt.savefig(os.path.join(FORECASTS_FIG_DIR, "autoarima.png"))
+    #plt.show()
     if write:
         now = datetime.now().strftime("%Y%m%d_%H%M%S")
         #file_path = os.path.join(PATHS["forecasts_data"], f"holtwinters_fc_{now}.parquet")
