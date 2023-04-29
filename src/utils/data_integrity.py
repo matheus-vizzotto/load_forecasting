@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import os
+import time
+import datetime as dt
 
 def check_date_range(data: pd.DataFrame, 
                      date_col_name: str, 
@@ -84,3 +86,17 @@ def check_outliers(data: pd.Series,
 #     df1 = pd.merge(dt_range, data1, left_on = "datetime", right_on=date1, how='outer')
 #     df2 = pd.merge(df1, data2, left_on=date1, right_on=date2, how='outer')
 #     return df2
+
+
+def measure_time(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        total_time = end_time - start_time
+        delta_time = dt.timedelta(seconds=total_time)
+        ref_date = dt.datetime(2023, 4, 29, 0, 0, 0)  # fixed reference date
+        time_str = (ref_date + delta_time).strftime("%H:%M:%S")
+        print(f"\tTempo de execução para {func.__name__}: {time_str}")
+        return result
+    return wrapper

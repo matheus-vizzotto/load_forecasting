@@ -1,9 +1,11 @@
 import utils.data_wrangling as dw
 import os
+from utils.data_integrity import measure_time
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_path)
 
+@measure_time
 def run_download():
     print("Iniciando download de dados.")
     print("\tDADOS DE CARGA ELÉTRICA")

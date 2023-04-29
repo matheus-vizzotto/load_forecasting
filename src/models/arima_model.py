@@ -21,7 +21,7 @@ def auto_arima_model(data: pd.Series,
                      test: Optional[pd.Series]=None,
                      write: bool=True,
                      fcs_dir: Optional[str]=None,
-                     save_model: bool=False) -> pd.DataFrame:
+                     save_model: bool=True) -> pd.DataFrame:
     """_summary_
 
     Args:
