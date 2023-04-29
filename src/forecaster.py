@@ -1,5 +1,6 @@
 from models.prophet_model import prophet_model 
 from models.holtwinters_model import holt_winters_model
+from models.arima_model import auto_arima_model
 from utils import data_wrangling as dw
 from utils import ts_wrangling as tw
 from paths import PATHS
@@ -26,6 +27,6 @@ def run_models(fcs_dir_):
     fc_p = prophet_model(data=Y_train, horizon=HORIZON, test=test["load_mwmed"], save_model=True, fcs_dir=fcs_dir_)
     fc_hw = holt_winters_model(data=Y_train, horizon=HORIZON, seasonality=24, trend_="add", seasonal_="mul", 
                                test=test["load_mwmed"], save_model=True, fcs_dir=fcs_dir_)
-
+    fc_aa = auto_arima_model(train, h_=HORIZON, level = [99,95,90], fcs_dir=fcs_dir_, test=test["load_mwmed"])
 
 # COLOCAR RESTANTE DOS MODELOS

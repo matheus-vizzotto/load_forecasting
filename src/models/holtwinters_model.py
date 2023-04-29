@@ -8,19 +8,13 @@ import joblib
 from typing import Optional
 # from paths import PATHS
 import os
+from paths import PATHS
+
+FORECASTS_FIG_DIR = PATHS['forecasts_figs']
 
 # import warnings # retirar avisos
 # warnings.filterwarnings('ignore')
 # rcParams['figure.figsize'] = 15, 5
-
-
-# df = load_data()
-# df["load_mwmed"].interpolate(method = "linear", inplace = True)
-# n_test = 15
-# train, test = train_test_split(df, n_test)
-#fit1 = ExponentialSmoothing(train ,seasonal_periods=7,trend='add', seasonal='mul').fit() # seasonal='mul' é melhor
-# fit1 = ExponentialSmoothing(train ,seasonal_periods=7,trend='add', seasonal='add').fit() # seasonal='mul' é melhor
-# y_hat = fit1.forecast(n_test)
 
 
 def holt_winters_model(data: pd.DataFrame,
@@ -57,6 +51,10 @@ def holt_winters_model(data: pd.DataFrame,
     plt.plot(forecast_df["date"], forecast_df["load_mwmed"], label="Forecast")
     if test is not None:
         plt.scatter(test.index, test, label="Observado")
+    plt.title("Holt-Winters")
+    plt.legend()
+    plt.savefig(os.path.join(FORECASTS_FIG_DIR, "holt_winters.png"))
+    #plt.show()
     if write:
         now = datetime.now().strftime("%Y%m%d_%H%M%S")
         #file_path = os.path.join(PATHS["forecasts_data"], f"holtwinters_fc_{now}.parquet")

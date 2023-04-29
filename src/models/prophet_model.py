@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 from typing import List, Optional
 from datetime import datetime
 import joblib
-# from paths import PATHS
+from paths import PATHS
 import os
+
+FORECASTS_FIG_DIR = PATHS['forecasts_figs']
 
 def prepare_prophet_df(data: pd.DataFrame, 
                        cols: List[str],
@@ -56,8 +58,10 @@ def prophet_model(data: pd.Series,
     plt.fill_between(forecast['ds'], forecast['yhat_upper'], forecast['yhat_lower'], alpha=.2, color="darkblue")
     if test is not None:
         plt.scatter(test.index, test, label="Observado")
+    plt.title("Prophet")
     plt.legend()
-    plt.show()
+    plt.savefig(os.path.join(FORECASTS_FIG_DIR, "prophet.png"))
+    # plt.show()
     if write:
         now = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_path = os.path.join(fcs_dir, f"prophet_fc_{now}.parquet")
