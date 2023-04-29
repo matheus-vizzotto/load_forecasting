@@ -2,6 +2,7 @@ from models.prophet_model import prophet_model
 from models.holtwinters_model import holt_winters_model
 from utils import data_wrangling as dw
 from utils import ts_wrangling as tw
+from paths import PATHS
 import os
 
 # script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -12,16 +13,19 @@ END = "2023-02-28"
 PERIOD = 24*365
 HORIZON = 24*2
 
+# DATA PREP
 load = dw.ons_data(freq='h', ano_inicio=2012, ano_fim=2023, idreg="S")
 df_load = dw.pipeline(load).loc[INIT:END,:]
 df_load = df_load.iloc[-PERIOD:,:]
 train, test = tw.train_test_split(df_load, test=HORIZON)
+Y_train, Y_test = train["load_mwmed"], test["load_mwmed"]
 
 
 
-def run_models():
-    fc_p = prophet_model(data=train, horizon=HORIZON, test=test["load_mwmed"], save_model=True)
-    fc_hw = holt_winters_model(data=train, y_col="load_mwmed", horizon=HORIZON, seasonality=24, trend_="add", seasonal_="mul", test=test["load_mwmed"], save_model=True)
+def run_models(fcs_dir_):
+    fc_p = prophet_model(data=Y_train, horizon=HORIZON, test=test["load_mwmed"], save_model=True, fcs_dir=fcs_dir_)
+    fc_hw = holt_winters_model(data=Y_train, horizon=HORIZON, seasonality=24, trend_="add", seasonal_="mul", 
+                               test=test["load_mwmed"], save_model=True, fcs_dir=fcs_dir_)
 
 
 # COLOCAR RESTANTE DOS MODELOS

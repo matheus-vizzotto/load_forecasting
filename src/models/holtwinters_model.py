@@ -6,7 +6,7 @@ from statsmodels.tsa.holtwinters import SimpleExpSmoothing, ExponentialSmoothing
 from datetime import datetime
 import joblib
 from typing import Optional
-from paths import PATHS
+# from paths import PATHS
 import os
 
 # import warnings # retirar avisos
@@ -24,13 +24,14 @@ import os
 
 
 def holt_winters_model(data: pd.DataFrame,
-                       y_col: str,
+                       #y_col: str,
                        horizon: int,
                        seasonality: int,
                        trend_: str,
                        seasonal_: str,
-                       test: Optional[pd.Series],
+                       test: Optional[pd.Series]=None,
                        write: bool=True,
+                       fcs_dir: Optional[str]=None,
                        save_model: bool=False) -> pd.DataFrame:
     """_summary_
 
@@ -48,8 +49,8 @@ def holt_winters_model(data: pd.DataFrame,
     Returns:
         pd.DataFrame: _description_
     """
-    x = data[y_col]
-    fitted_model = ExponentialSmoothing(x, seasonal_periods=seasonality, trend=trend_, seasonal=seasonal_).fit()
+    #x = data[y]
+    fitted_model = ExponentialSmoothing(data, seasonal_periods=seasonality, trend=trend_, seasonal=seasonal_).fit()
     forecast = fitted_model.forecast(horizon)
     forecast_df = pd.DataFrame({"date": forecast.index.values, "load_mwmed": forecast.values})
     plt.figure(figsize=(15,5))
@@ -58,7 +59,8 @@ def holt_winters_model(data: pd.DataFrame,
         plt.scatter(test.index, test, label="Observado")
     if write:
         now = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_path = os.path.join(PATHS["forecasts_data"], f"holtwinters_fc_{now}.parquet")
+        #file_path = os.path.join(PATHS["forecasts_data"], f"holtwinters_fc_{now}.parquet")
+        file_path = os.path.join(fcs_dir, f"holtwinters_fc_{now}.parquet")
         forecast_df.to_parquet(file_path)
     if save_model:
         joblib.dump(fitted_model, '../models/holtwinters_joblib')

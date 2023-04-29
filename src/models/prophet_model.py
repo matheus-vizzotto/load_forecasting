@@ -2,10 +2,10 @@ import fbprophet
 from fbprophet.diagnostics import cross_validation
 import pandas as pd
 import matplotlib.pyplot as plt
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 import joblib
-from paths import PATHS
+# from paths import PATHS
 import os
 
 def prepare_prophet_df(data: pd.DataFrame, 
@@ -19,13 +19,14 @@ def prepare_prophet_df(data: pd.DataFrame,
     ts.columns = ["ds", "y"]
     return ts
 
-def prophet_model(data: pd.DataFrame, 
+def prophet_model(data: pd.Series, 
                   #date_col: str, 
                   #y_col: str, 
                   horizon: int, 
                   test: pd.Series=None,
                   frequency: str='h',
                   write: bool=True,
+                  fcs_dir: Optional[str]=None,
                   save_model=False) -> pd.DataFrame:
     """_summary_
 
@@ -59,7 +60,7 @@ def prophet_model(data: pd.DataFrame,
     plt.show()
     if write:
         now = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_path = os.path.join(PATHS["forecasts_data"], f"prophet_fc_{now}.parquet")
+        file_path = os.path.join(fcs_dir, f"prophet_fc_{now}.parquet")
         forecast.to_parquet(file_path)
         #forecast.to_parquet(f"../data/04_forecasts/prophet_fc_{now}.parquet")
     if save_model:

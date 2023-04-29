@@ -1,7 +1,11 @@
 import get_data
 import forecaster
+from paths import PATHS
+import os
 
-#get_data.run_download()
+FCS_PATH = PATHS["forecasts_data"]
 
-forecaster.run_models()
+get_data.run_download()
+forecaster.run_models(FCS_PATH)
 
+print("\nPrograma executado com sucesso! Volte sempre!")

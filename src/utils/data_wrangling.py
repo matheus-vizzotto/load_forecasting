@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
+from paths import PATHS
 #import mypy
 
 class ons_data:
@@ -38,7 +39,8 @@ class ons_data:
         self.seasonal_components = pd.DataFrame()
         #self.data_dt_inserted = pd.DataFrame()
         #self.data_treated = pd.DataFrame()
-        self.data_dir = "../data/03_processed/"
+        #self.data_dir = "../data/03_processed/"
+        self.data_dir = PATHS['processed_data']
 
     def read(self) -> pd.DataFrame:
         """Função para ler arquivos "csv" já presentes no diretório de dados.
@@ -50,9 +52,9 @@ class ons_data:
             pd.DataFrame: série de carga elétrica no período entre ano_inicio e ano_fim.
         """
         if self.freq == "h":
-            path = "".join([self.data_dir,"h_load.parquet"])
+            path = "".join([self.data_dir,"/h_load.parquet"])
         elif self.freq == "d":
-            path = "".join([self.data_dir,"d_load.parquet"])
+            path = "".join([self.data_dir,"/d_load.parquet"])
         #df = pd.read_csv(path, sep=";", decimal=",", parse_dates=["date"])
         df = pd.read_parquet(path)
         if not self.idreg:
@@ -299,6 +301,8 @@ class inmet_data:
         self.ano_fim = ano_fim
         self.data = pd.DataFrame()
         self.freq = 'h'
+        self.temp_data_dir = PATHS['interim_data']
+        self.processed_data_dir = PATHS['processed_data']
         #self.url = f'https://portal.inmet.gov.br/uploads/dadoshistoricos/{ano}.zip'
         self.columns_dict = {
                             'DATA (YYYY-MM-DD)': 'data',
@@ -398,7 +402,10 @@ class inmet_data:
             ending = "".join(["_", str(espec)])
         else:
             ending = ""
-        df_.to_parquet(f"../data/processed/inmet/inmet_data{ending}.parquet")
+        #df_.to_parquet(f"../data/processed/inmet/inmet_data{ending}.parquet")
+        file_path = os.path.join(self.temp_data_dir, "inmet/inmet_data{}.parquet".format(ending))
+        print(file_path)
+        df_.to_parquet(file_path)
 
     def correct_dates(self, 
                       estacao: str, 
@@ -480,13 +487,15 @@ class inmet_data:
         """Função que cria um diretório "inmet" no diretório atual e salva os arquivos tratados de cada ano nela
         para depois serem unificados e salvos pelo método "build_database".
         """
-        temp_path = "../data/interim/"
-        if "inmet" in os.listdir(temp_path):
+        #temp_path = "../data/interim/"
+        #if "inmet" in os.listdir(temp_path):
+        if "inmet" in os.listdir(self.temp_data_dir):
             print("Diretório 'inmet' já presente na pasta atual.")
             pass
         else:
             print("Criando diretório 'inmet' na pasta atual...")
-            os.mkdir(temp_path + "/inmet")
+            #os.mkdir(temp_path + "/inmet")
+            os.mkdir(self.temp_data_dir + "/inmet")
         df = pd.DataFrame()
         for ano in range(self.ano_inicio, self.ano_fim+1):
             print(f"Trabalhando nos dados de {ano}...")
@@ -537,7 +546,8 @@ class inmet_data:
         Args:
             delete_partial_data (bool, optional): _description_. Defaults to True.
         """
-        temp_path = "../data/interim/inmet/"
+        #temp_path = "../data/interim/inmet/"
+        temp_path = os.path.join(self.temp_data_dir, "inmet/")
         files = ["".join([temp_path, file]) for file in os.listdir(temp_path)]
         df = pd.DataFrame()
         for file in files:
@@ -546,7 +556,9 @@ class inmet_data:
             df0 = df0.astype(self.col_types)
             df = pd.concat([df,df0])
         #df.set_index(["estacao","data_hora"], inplace=True)
-        df.to_parquet("../data/inmet_data.parquet")
+        #df.to_parquet("../data/inmet_data.parquet")
+        file_path = os.path.join(self.processed_data_dir, "inmet_data.parquet")
+        df.to_parquet(file_path)
         print("Arquivo 'inmet_data.parquet' salvo no diretório atual. Deletando pasta 'inmet'.")
         if delete_partial_data:
             shutil.rmtree(temp_path)
@@ -565,9 +577,12 @@ class inmet_data:
         """
         path = None
         if final:
-            self.data = pd.read_parquet("../data/processed/inmet_data_agg.parquet")
+            file_path = os.path.join(self.processed_data_dir, "inmet_data_agg.parquet")
+            self.data = pd.read_parquet(file_path)
         else:
-            df = pd.read_parquet("../data/processed/inmet_data.parquet")
+            file_path = os.path.join(self.processed_data_dir, "inmet_data.parquet")
+            df = pd.read_parquet(file_path)
+            #df = pd.read_parquet("../data/processed/inmet_data.parquet")
             df = df.astype(self.col_types)
             df.set_index(["estacao","data_hora"], inplace=True)
             df.sort_index(inplace=True)
@@ -611,7 +626,9 @@ class inmet_data:
             }
         df = self.data.reset_index().groupby("data_hora").agg(agg_dict)
         if write:
-            df.to_parquet("../data/processed/inmet_data_agg.parquet")
+            file_path = os.path.join(self.processed_data_dir, "inmet_data_agg.parquet")
+            df.to_parquet(file_path)
+            #df.to_parquet("../data/processed/inmet_data_agg.parquet")
         else:
             return df
     
