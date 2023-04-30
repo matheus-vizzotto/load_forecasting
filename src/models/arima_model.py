@@ -57,4 +57,7 @@ def auto_arima_model(data: pd.Series,
         forecasts_df_final.to_parquet(file_path)
     if save_model:
         joblib.dump(sf, '../models/autoarima_joblib')
+    # sf.models[0].fit(df_sf["y"].values)
+    # model_coefs = sf.models[0].model_
+    # print(model_coefs)
     return forecasts_df_final
