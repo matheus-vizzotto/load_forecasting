@@ -11,3 +11,4 @@ FCS_PATH = PATHS["forecasts_data"]
 forecaster.run_models(FCS_PATH)
 
 print("\nPrograma executado com sucesso! Volte sempre!")
+ 
