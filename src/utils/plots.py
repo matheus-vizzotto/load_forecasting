@@ -3,6 +3,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+from typing import Optional
 
 
 def plot_ts(x_: pd.Series, 
@@ -31,7 +32,7 @@ def plot_with_confidence(data: pd.DataFrame,
                          color: str='darkblue', 
                          alpha=.2, 
                          test: pd.Series=None, 
-                         save=False):
+                         save_path: Optional[str]=None):
     """Plota forecast junto com os intervalos de confiança. Importante: é necessário que os ICs estejam
     especificados no nome da coluna (ex.: ['AutoARIMA-lo-90', 'AutoARIMA-hi-90'])
 
@@ -53,8 +54,8 @@ def plot_with_confidence(data: pd.DataFrame,
         plt.fill_between(data[x_], data[cols[1]], data[cols[0]], alpha=alpha, label=f"IC -{ic}%", color=color)
     plt.title(title_)
     plt.legend(bbox_to_anchor = (1.10,1))
-    if save:
-        plt.savefig(f"../figs/{title_}.png")
+    if save_path:
+        plt.savefig(save_path)
     else:
         plt.show()
 

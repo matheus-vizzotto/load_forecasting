@@ -9,6 +9,7 @@ FCS_PATH = PATHS["forecasts_data"]
 
 #get_data.run_download()
 forecaster.run_models(FCS_PATH)
+# metrics.run_comparison()
 
 print("\nPrograma executado com sucesso! Volte sempre!")
  
