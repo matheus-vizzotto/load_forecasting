@@ -9,8 +9,13 @@ from typing import Optional
 # from paths import PATHS
 import os
 from paths import PATHS
+import warnings
+from statsmodels.tools.sm_exceptions import ConvergenceWarning
+warnings.simplefilter('ignore', ConvergenceWarning)
 
 FORECASTS_FIG_DIR = PATHS['forecasts_figs']
+MODELS_DIR = PATHS['forecasts_figs']
+
 
 # import warnings # retirar avisos
 # warnings.filterwarnings('ignore')
@@ -44,7 +49,7 @@ def holt_winters_model(data: pd.DataFrame,
         pd.DataFrame: _description_
     """
     #x = data[y]
-    fitted_model = ExponentialSmoothing(data, seasonal_periods=seasonality, trend=trend_, seasonal=seasonal_).fit()
+    fitted_model = ExponentialSmoothing(data, seasonal_periods=seasonality, trend=trend_, seasonal=seasonal_, freq='H').fit()
     forecast = fitted_model.forecast(horizon)
     forecast_df = pd.DataFrame({"date": forecast.index.values, "load_mwmed": forecast.values})
     plt.figure(figsize=(15,5))
@@ -61,7 +66,8 @@ def holt_winters_model(data: pd.DataFrame,
         file_path = os.path.join(fcs_dir, f"holtwinters_fc_{now}.parquet")
         forecast_df.to_parquet(file_path)
     if save_model:
-        joblib.dump(fitted_model, '../models/holtwinters_joblib')
+        model_path = os.path.join(MODELS_DIR, "holtwinters_joblib")
+        joblib.dump(fitted_model, model_path)
     return forecast
 
     

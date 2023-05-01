@@ -10,6 +10,7 @@ import joblib
 from paths import PATHS
 
 FORECASTS_FIG_DIR = PATHS['forecasts_figs']
+MODELS_DIR = PATHS['forecasts_figs']
 
 
 def auto_arima_model(data: pd.Series,
@@ -59,5 +60,6 @@ def auto_arima_model(data: pd.Series,
     if save_model:
         sf.models[0].fit(df_sf["y"].values)
        # model_coefs = sf.models[0].model_
-        joblib.dump(sf, '../models/autoarima_joblib')
+        model_path = os.path.join(MODELS_DIR, "autoarima_joblib")
+        joblib.dump(sf, model_path)
     return forecasts_df_final

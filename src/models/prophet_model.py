@@ -9,6 +9,7 @@ from paths import PATHS
 import os
 
 FORECASTS_FIG_DIR = PATHS['forecasts_figs']
+MODELS_DIR = PATHS['forecasts_figs']
 
 def prepare_prophet_df(data: pd.DataFrame, 
                        cols: List[str],
@@ -68,5 +69,7 @@ def prophet_model(data: pd.Series,
         forecast.to_parquet(file_path)
         #forecast.to_parquet(f"../data/04_forecasts/prophet_fc_{now}.parquet")
     if save_model:
-        joblib.dump(model, '../models/prophet_joblib')
+        #joblib.dump(model, '../models/prophet_joblib')
+        model_path = os.path.join(MODELS_DIR, 'prophet_joblib')
+        joblib.dump(model, model_path)
     return forecast

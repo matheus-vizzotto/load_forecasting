@@ -2,6 +2,7 @@ import logging
 import time
 from paths import PATHS
 import os
+import datetime as dt
 
 LOGS_PATH = PATHS['logs']
 DATA_INFO_PATH = os.path.join(LOGS_PATH, "data_info.log")
@@ -28,7 +29,7 @@ def setup_logger(name, log_file, level=logging.INFO):
     logger.addHandler(handler)
     return logger
 
-data_info_logger = setup_logger('data_logs', DATA_INFO_PATH, level=logging.WARNING)
+data_info_logger = setup_logger('data_logs', DATA_INFO_PATH, level=logging.INFO)
 
 def log_data_info(estacao: str, ano: int, nans: int):
     """_summary_
@@ -42,7 +43,7 @@ def log_data_info(estacao: str, ano: int, nans: int):
         date_min (dt.datetime): _description_
         date_max (dt.datetime): _description_
     """
-    data_info_logger.warning(f"[INMET] [RESUMO] Estação {estacao}, ano {ano}: VALORES VAZIOS: {nans:,}")# | DATA MÍNIMA: {date_min} | DATA MÁXIMA: {date_max}")
+    data_info_logger.info(f"[INMET] [RESUMO] Estação {estacao}, ano {ano}: VALORES VAZIOS: {nans:,}")# | DATA MÍNIMA: {date_min} | DATA MÁXIMA: {date_max}")
 
 def log_dates(estacao: str, ano: int, missing_dates: list, datas_estranhas: list):
     """_summary_
@@ -53,17 +54,24 @@ def log_dates(estacao: str, ano: int, missing_dates: list, datas_estranhas: list
         missing_dates (list): _description_
         datas_estranhas (list): _description_
     """
-    data_info_logger.warning(f"[RESUMO] Estação {estacao}, ano {ano}: DATAS FALTANTES: {missing_dates} | DATAS ESTRANHAS: {datas_estranhas}")
+    data_info_logger.info(f"[INMET] [RESUMO] Estação {estacao}, ano {ano}: DATAS FALTANTES: {missing_dates} | DATAS ESTRANHAS: {datas_estranhas}")
+
+def general_data_info_log(message):
+    data_info_logger.info(f"{message}")
 
 
-timing_logs = setup_logger('timing_logs', TIMING_INFO_PATH, level=logging.WARNING)
+timing_logs = setup_logger('timing_logs', TIMING_INFO_PATH, level=logging.INFO)
 
 def timer_decorator(func):
     def wrapper(*args, **kwargs):
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
+        total_time = end_time - start_time
+        delta_time = dt.timedelta(seconds=total_time)
+        ref_date = dt.datetime(2023, 4, 29, 0, 0, 0)  # fixed reference date
+        time_str = (ref_date + delta_time).strftime("%H:%M:%S")
         #logging.warning(f'{func.__name__} executed in {end_time - start_time} seconds')
-        timing_logs.warning(f'{func.__name__} executed in {end_time - start_time} seconds')
+        timing_logs.info(f'{func.__name__} executado em {time_str} (HH:MM:SS)')
         return result
     return wrapper

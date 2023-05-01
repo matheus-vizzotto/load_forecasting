@@ -3,19 +3,19 @@ import os
 #from utils.data_integrity import measure_time
 from utils.logger import timer_decorator
 
-script_path = os.path.dirname(os.path.abspath(__file__))
-os.chdir(script_path)
+# IDENTIFICADORES
+ANO_INICIO = 2012
+ANO_FIM = 2023
 
-#@measure_time
 @timer_decorator
 def run_download():
-    print("Iniciando download de dados.")
-    print("\tDADOS DE CARGA ELÉTRICA")
-    load_data = dw.ons_data(freq='h', ano_inicio=2022, ano_fim=2023, idreg="S")
+    print("INICIANDO DOWNLOAD DE DADOS")
+    print("\t-CARGA ELÉTRICA")
+    load_data = dw.ons_data(freq='h', ano_inicio=ANO_INICIO, ano_fim=ANO_FIM, idreg="S")
     load_data.update(printer=True, write=True)
 
-    print("\n\tDADOS METEOROLÓGICOS")
-    temp_data = dw.inmet_data(2022,2023)
+    print("\t-METEOROLOGIA")
+    temp_data = dw.inmet_data(ano_inicio=ANO_INICIO, ano_fim=ANO_FIM)
     temp_data.download()
     temp_data.build_database()
     temp_data.read_parquet()

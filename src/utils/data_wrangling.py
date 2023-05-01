@@ -6,12 +6,14 @@ from typing import List
 from typing import Optional
 from zipfile import ZipFile
 import utils.logger as lg
-from utils.logger import timer_decorator
+from utils.logger import timer_decorator, general_data_info_log
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
 from paths import PATHS
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 #import mypy
 
 class ons_data:
@@ -97,7 +99,7 @@ class ons_data:
             df = pd.DataFrame()
             for ano in range(self.ano_inicio, self.ano_fim + 1):
                 if printer:
-                    print(f"Lendo ano {ano}...")
+                    print(f"\tLendo ano {ano}...")
                 df2 = pd.read_csv(url.format(ano), sep = ";")
                 df = pd.concat([df, df2])
             df.columns = ["id_reg", "desc_reg", "date", "load_mwmed"]
@@ -118,6 +120,7 @@ class ons_data:
             if write:
                 #full_path = "".join([self.data_dir,f"{self.freq}_load.csv"])
                 full_path = "".join([self.data_dir,f"{self.freq}_load.parquet"])
+                full_path = os.path.join(self.data_dir, f"{self.freq}_load.parquet")
                 df.to_parquet(full_path)
                 #df.to_csv(full_path, sep=";", decimal=",")
             self.data = df
@@ -405,7 +408,6 @@ class inmet_data:
             ending = ""
         #df_.to_parquet(f"../data/processed/inmet/inmet_data{ending}.parquet")
         file_path = os.path.join(self.temp_data_dir, "inmet/inmet_data{}.parquet".format(ending))
-        print(file_path)
         df_.to_parquet(file_path)
 
     def correct_dates(self, 
@@ -492,15 +494,15 @@ class inmet_data:
         #temp_path = "../data/interim/"
         #if "inmet" in os.listdir(temp_path):
         if "inmet" in os.listdir(self.temp_data_dir):
-            print("Diretório 'inmet' já presente na pasta atual.")
+            print("\t*Diretório 'inmet' já presente na pasta de dados.")
             pass
         else:
-            print("Criando diretório 'inmet' na pasta atual...")
+            print("\t*Criando diretório 'inmet' na pasta de dados...")
             #os.mkdir(temp_path + "/inmet")
             os.mkdir(self.temp_data_dir + "/inmet")
         df = pd.DataFrame()
         for ano in range(self.ano_inicio, self.ano_fim+1):
-            print(f"Trabalhando nos dados de {ano}...")
+            print(f"\tTrabalhando nos dados de {ano}...")
             path = f'https://portal.inmet.gov.br/uploads/dadoshistoricos/{ano}.zip'
             r = requests.get(path, verify = False)
             files = ZipFile(BytesIO(r.content))
@@ -541,6 +543,7 @@ class inmet_data:
             df01.sort_values(by=["estacao", "data_hora"])
             self.write_parquet(df01, espec=ano)
 
+    @timer_decorator
     def build_database(self, 
                        delete_partial_data=False):
         """_summary_
@@ -551,9 +554,11 @@ class inmet_data:
         #temp_path = "../data/interim/inmet/"
         temp_path = os.path.join(self.temp_data_dir, "inmet/")
         files = ["".join([temp_path, file]) for file in os.listdir(temp_path)]
+        print("AGREGAÇÃO DOS DADOS")
         df = pd.DataFrame()
         for file in files:
-            print(f"Concatenando arquivo: {file}")
+            file_name_sub = file.split("/")[-1]
+            print(f"\tConcatenando arquivo: {file_name_sub}")
             df0 = pd.read_parquet(file)
             df0 = df0.astype(self.col_types)
             df = pd.concat([df,df0])
@@ -561,7 +566,7 @@ class inmet_data:
         #df.to_parquet("../data/inmet_data.parquet")
         file_path = os.path.join(self.processed_data_dir, "inmet_data.parquet")
         df.to_parquet(file_path)
-        print("Arquivo 'inmet_data.parquet' salvo no diretório atual. Deletando pasta 'inmet'.")
+        print("\t*Arquivo 'inmet_data.parquet' salvo no diretório atual. Deletando pasta 'inmet'.")
         if delete_partial_data:
             shutil.rmtree(temp_path)
         else:
@@ -626,6 +631,8 @@ class inmet_data:
                 'vento_rajada_maxima_m_s': 'mean',
                 'vento_velocidade_horaria_m_s': 'mean' 
             }
+        nans = self.data.reset_index().isna().sum()
+        lg.general_data_info_log(f"Valores vazios antes de agregar: \n{nans}")
         df = self.data.reset_index().groupby("data_hora").agg(agg_dict)
         if write:
             file_path = os.path.join(self.processed_data_dir, "inmet_data_agg.parquet")
