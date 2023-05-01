@@ -56,7 +56,7 @@ def log_dates(estacao: str, ano: int, missing_dates: list, datas_estranhas: list
     data_info_logger.warning(f"[RESUMO] Estação {estacao}, ano {ano}: DATAS FALTANTES: {missing_dates} | DATAS ESTRANHAS: {datas_estranhas}")
 
 
-timing_logs = setup_logger('models_logs', MODELS_INFO_PATH, level=logging.WARNING)
+timing_logs = setup_logger('timing_logs', TIMING_INFO_PATH, level=logging.WARNING)
 
 def timer_decorator(func):
     def wrapper(*args, **kwargs):
