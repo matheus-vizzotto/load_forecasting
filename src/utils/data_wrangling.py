@@ -6,6 +6,7 @@ from typing import List
 from typing import Optional
 from zipfile import ZipFile
 import utils.logger as lg
+from utils.logger import timer_decorator
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -65,7 +66,7 @@ class ons_data:
         #df.set_index("date", inplace=True)
         self.data = df
         #return df
-
+    @timer_decorator
     def update(self, 
                printer=False, 
                write: bool=False) -> pd.DataFrame:
@@ -633,4 +634,26 @@ class inmet_data:
             return df
     
 
+# Função para pipeline de dados
+# class DataPipeline: 
+#     def __init__(self, data_source, transformation_funcs=None): 
+#         self.data_source = data_source 
+#         self.transformation_funcs = transformation_funcs or [] 
+    
+#     def add_transformation(self, func): 
+#         self.transformation_funcs.append(func) 
         
+#     def run_pipeline(self): 
+#         data = pd.read_csv(self.data_source) 
+#         for func in self.transformation_funcs: 
+#             data = func(data) 
+#         return data
+# def filter_data(data): 
+#     return data[data['col1'] > 0] 
+# def aggregate_data(data): 
+#     return data.groupby('col2').sum() 
+# pipeline = DataPipeline('data.csv') 
+# pipeline.add_transformation(filter_data) 
+# pipeline.add_transformation(aggregate_data) 
+# transformed_data = pipeline.run_pipeline() 
+# print(transformed_data.head())
