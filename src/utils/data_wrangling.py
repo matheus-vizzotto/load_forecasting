@@ -484,6 +484,7 @@ class inmet_data:
             col = col.fillna(method="ffill").fillna(method="bfill")
         return col
     
+    @timer_decorator
     def download(self) -> None:
         """Função que cria um diretório "inmet" no diretório atual e salva os arquivos tratados de cada ano nela
         para depois serem unificados e salvos pelo método "build_database".
