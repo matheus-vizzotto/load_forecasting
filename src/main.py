@@ -5,8 +5,9 @@ import os
 
 FCS_PATH = PATHS["forecasts_data"]
 
-scraper.run_download()
-forecaster.run_models(FCS_PATH)
+#scraper.run_download()
+#forecaster.run_models(FCS_PATH)
+forecaster.run_models()
 # metrics.run_comparison()
 
 print("\nPrograma executado com sucesso! Volte sempre!")
