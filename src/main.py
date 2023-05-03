@@ -5,7 +5,7 @@ import os
 
 FCS_PATH = PATHS["forecasts_data"]
 
-#scraper.run_download()
+scraper.run_download()
 forecaster.run_models(FCS_PATH)
 # metrics.run_comparison()
 

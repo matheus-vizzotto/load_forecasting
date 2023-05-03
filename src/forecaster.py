@@ -29,9 +29,9 @@ def run_models(fcs_dir_):
     print("\t#### Holt-Winters ####")
     fc_hw = holt_winters_model(data=Y_train, horizon=HORIZON, seasonality=24, trend_="add", seasonal_="mul", 
                                test=test["load_mwmed"], save_model=True, fcs_dir=fcs_dir_)
-    print("\t#### AutoARIMA ####...")
+    print("\t#### AutoARIMA ####")
     fc_aa = auto_arima_model(train, h_=HORIZON, level = [99,95,90], fcs_dir=fcs_dir_, test=test["load_mwmed"])
-    print("\t#### MSTL ####...")
+    print("\t#### MSTL ####")
     fc_aa = mstl_model(train, h_=HORIZON, level = [99,95,90], fcs_dir=fcs_dir_, test=test["load_mwmed"])
     
 
