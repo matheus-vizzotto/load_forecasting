@@ -270,9 +270,9 @@ def pipeline(x,
     return df
     #df.describe(include=category)
 
-def prepare_statsforecast_df(x: pd.DataFrame, 
+def prepare_statsforecast_df(x: pd.Series, 
                              unique_id: str, 
-                             date_is_index=True) -> pd.DataFrame:
+                             date_is_index=True,) -> pd.DataFrame:
     """Função para transformar um DataFrame para o formato utilizado pelos algoritmos do pacote statsforecast (Nixtla)
 
     Args:
@@ -283,9 +283,9 @@ def prepare_statsforecast_df(x: pd.DataFrame,
         pd.DataFrame: dataframe no formato necessário.
     """
     if date_is_index:
-        df2 = x["load_mwmed"].reset_index()
+        df2 = x.reset_index()
     else:
-        df2 = x["load_mwmed"]
+        df2 = x[["date", "load_mwmed"]]
     df2.columns = ["ds", "y"]
     df2["unique_id"] = unique_id
     return df2

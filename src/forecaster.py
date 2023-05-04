@@ -21,7 +21,10 @@ df_load = dw.pipeline(load).loc[INIT:END,:]
 df_load = df_load.iloc[-PERIOD:,:]
 ts = SerieTemporal(data=df_load, y_col = "load_mwmed", date_col_name = "date", test_size=HORIZON, frequency='h')
 fm = Projecoes(ts=ts)
-fm.prophet_fit_forecast()
+#fm.prophet_fit_forecast()
+#fm.hw_fit_forecast()
+#fm.auto_arima_model()
+fm.mstl_model()
 
 # # DATA PREP
 # load = dw.ons_data(freq='h', ano_inicio=2012, ano_fim=2023, idreg="S")
