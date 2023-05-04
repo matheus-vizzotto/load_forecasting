@@ -131,12 +131,12 @@ class Projecoes:
             joblib.dump(model, model_path)
         return forecast
     
-    def auto_arima_model(self,
-                        level: List[int]=[90],
-                        ts_name_id= 'hourly_load',
-                        write: bool=True,
-                        save_model: bool=True,
-                        model_name: str="AutoARIMA") -> pd.DataFrame:
+    def auto_arima_fit_forecast(self,
+                                level: List[int]=[90],
+                                ts_name_id= 'hourly_load',
+                                write: bool=True,
+                                save_model: bool=True,
+                                model_name: str="AutoARIMA") -> pd.DataFrame:
         """_summary_
 
         Args:
@@ -154,6 +154,7 @@ class Projecoes:
             freq=self.ts.frequency
             )
         sf.fit(df_sf)
+        self.models[model_name] = sf
         forecast = sf.forecast(h=self.ts.horizon, level=level)
         self.forecasts[model_name] = forecast
         self.plot_forecasting(yhat=forecast[model_name], plot_name=f"{model_name}")
@@ -166,7 +167,7 @@ class Projecoes:
             joblib.dump(sf, model_path)
         return forecast
     
-    def mstl_model(self,
+    def mstl_fit_forecast(self,
                    level=[90],
                    ts_name_id= 'hourly_load',
                    write: bool=True,
@@ -189,6 +190,7 @@ class Projecoes:
             freq=self.ts.frequency
             )
         sf.fit(df_sf)
+        self.models[model_name] = sf
         forecast = sf.forecast(h=self.ts.horizon, level=level)
         self.forecasts[model_name] = forecast
         self.plot_forecasting(yhat=forecast[model_name], plot_name=f"{model_name}")

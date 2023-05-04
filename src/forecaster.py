@@ -24,7 +24,7 @@ fm = Projecoes(ts=ts)
 #fm.prophet_fit_forecast()
 #fm.hw_fit_forecast()
 #fm.auto_arima_model()
-fm.mstl_model()
+#fm.mstl_model()
 
 # # DATA PREP
 # load = dw.ons_data(freq='h', ano_inicio=2012, ano_fim=2023, idreg="S")
@@ -32,6 +32,7 @@ fm.mstl_model()
 # df_load = df_load.iloc[-PERIOD:,:]
 # train, test = tw.train_test_split(df_load, test=HORIZON)
 # Y_train, Y_test = train["load_mwmed"], test["load_mwmed"]
+
 
 # MODELS/...
 # @timer_decorator
@@ -49,3 +50,14 @@ fm.mstl_model()
     
 
 # COLOCAR RESTANTE DOS MODELOS
+@timer_decorator
+def run_models():
+    print("RODANDO MODELOS")
+    print("\t#### Prophet ####")
+    fc_p = fm.prophet_fit_forecast()
+    print("\t#### Holt-Winters ####")
+    fc_hw = fm.hw_fit_forecast()
+    print("\t#### MSTL ####")
+    fc_ml = fm.mstl_fit_forecast()
+    print("\t#### AutoARIMA ####")
+    fc_aa = fm.auto_arima_fit_forecast()
