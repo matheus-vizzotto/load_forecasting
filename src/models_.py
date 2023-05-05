@@ -8,6 +8,7 @@ from statsforecast.models import AutoARIMA
 from statsforecast import StatsForecast
 from statsforecast.models import MSTL
 from utils.data_wrangling import prepare_statsforecast_df
+from metrics import get_metrics
 import pandas as pd
 import matplotlib.pyplot as plt
 from typing import List, Optional
@@ -15,6 +16,9 @@ from datetime import datetime
 import joblib
 from paths import PATHS
 import os
+import warnings
+from statsmodels.tools.sm_exceptions import ConvergenceWarning
+warnings.simplefilter('ignore', ConvergenceWarning)
 
 FCS_PATH = PATHS["forecasts_data"]
 FORECASTS_FIG_DIR = PATHS['forecasts_figs']
@@ -51,6 +55,7 @@ class Projecoes:
         self.forecasts_dir = FCS_PATH
         self.forecasts_fig_dir = FORECASTS_FIG_DIR
         self.models_dir = MODELS_DIR
+        self.models_metrics = {}
 
     def plot_forecasting(self, 
                          yhat: pd.Series,
@@ -67,6 +72,7 @@ class Projecoes:
         plt.title(plot_name)
         plt.legend()
         plt.savefig(os.path.join(self.forecasts_fig_dir, f"{plot_name}.png"))
+        plt.close()
     
     def prophet_fit_forecast(self, 
                              write: bool=True,
@@ -89,6 +95,8 @@ class Projecoes:
         future_fbp = model.make_future_dataframe(periods=self.ts.horizon, freq=self.ts.frequency, include_history=False)
         forecast = model.predict(future_fbp)
         self.forecasts[model_name] = forecast
+        metrics = get_metrics(forecast["yhat"], self.ts.test)
+        self.models_metrics[model_name] = metrics 
         self.plot_forecasting(yhat=forecast["yhat"], plot_name=model_name)
         if write:
             now = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -122,6 +130,8 @@ class Projecoes:
         self.plot_forecasting(yhat=forecast, plot_name=f"{model_name}")
         forecast_df = pd.DataFrame({"date": forecast.index.values, "load_mwmed": forecast.values})
         self.forecasts[model_name] = forecast_df
+        metrics = get_metrics(forecast, self.ts.test)
+        self.models_metrics[model_name] = metrics 
         if write:
             now = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_path = os.path.join(self.forecasts_dir, f"{model_name}_fc_{now}.parquet")
@@ -157,6 +167,8 @@ class Projecoes:
         self.models[model_name] = sf
         forecast = sf.forecast(h=self.ts.horizon, level=level)
         self.forecasts[model_name] = forecast
+        metrics = get_metrics(forecast[model_name], self.ts.test)
+        self.models_metrics[model_name] = metrics 
         self.plot_forecasting(yhat=forecast[model_name], plot_name=f"{model_name}")
         if write:
             now = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -193,6 +205,8 @@ class Projecoes:
         self.models[model_name] = sf
         forecast = sf.forecast(h=self.ts.horizon, level=level)
         self.forecasts[model_name] = forecast
+        metrics = get_metrics(forecast[model_name], self.ts.test)
+        self.models_metrics[model_name] = metrics 
         self.plot_forecasting(yhat=forecast[model_name], plot_name=f"{model_name}")
         if write:
             now = datetime.now().strftime("%Y%m%d_%H%M%S")
