@@ -218,3 +218,40 @@ class Projecoes:
             joblib.dump(sf, model_path)
         return forecast
         
+class ts_cross_validation:
+    def __init__(self, ts: SerieTemporal):
+        self.ts = ts
+        self.training_dates = {}
+
+    def slider(self,
+               use_x_days: str,
+               horizon = None):
+        """Função para obter as partições de cross validation em séries temporais que serão utilizadas
+        pelos modelos individualmente.
+
+        Args:
+            use_x_days (str): 
+                Data a partir da qual os modelos serão treinados, i.e., a primeira rodada de cross validation 
+                utilizará "use_x_days" dias para treinar primeiro modelo de ordem cronológica.
+            horizon (_type_, optional): 
+                Horizonte de previsão do cross-validation em horas. Neste caso, é o mesmo valor de "steps", 
+                ou seja, depois de treinar o primeiro modelo utilizando "use_x_days", será considerado o
+                período ("use_x_days" + "horizon") para treinar o segundo modelo e prever as próximas "horizon"
+                horas.
+        """
+        if horizon is None:
+            horizon = pd.Timedelta(f"{self.ts.horizon} hours")
+        use_x_days = pd.Timedelta(use_x_days)
+        horizon = pd.Timedelta(horizon)
+        min_date = self.ts.full_series.index.min()
+        max_date = self.ts.full_series.index.max()
+        initial_training_date = min_date + use_x_days
+        print(initial_training_date, max_date, horizon)
+        n_partitions = int(len(pd.date_range(initial_training_date, max_date, freq='h'))/(horizon.total_seconds()/3600))
+        d = {}
+        for i in range(1, n_partitions+1):
+            start = self.ts.full_series.index.max() - ((horizon*(i+1)) - pd.Timedelta("1 hour"))
+            end = start + (horizon - pd.Timedelta("1 hour"))
+            x = self.ts.full_series.loc[:end].index
+            d[start] = x
+        self.training_dates = d

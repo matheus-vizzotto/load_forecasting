@@ -63,3 +63,4 @@ def extract_model_cols(data: pd.DataFrame,
     """
     model_cols = data[[x for x in data.columns if model in x or date_col_name in x]]
     return model_cols
+
