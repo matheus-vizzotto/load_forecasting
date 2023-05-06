@@ -38,6 +38,7 @@ class SerieTemporal:
                  seasonality: int=24):
         self.data = data
         self.y_col = y_col
+        self.full_series = data[y_col]
         self.date_col_name = date_col_name
         self.train = data.iloc[:-test_size][y_col]
         self.horizon = test_size
@@ -67,7 +68,7 @@ class Projecoes:
             plot_name (str): _description_
         """
         plt.figure(figsize=(15,5))
-        plt.plot(self.ts.test.index, yhat, label='Forecast')
+        plt.plot(self.ts.test.index, yhat, label='Forecast', color="red")
         plt.scatter(self.ts.test.index, self.ts.test, label='Observado')
         plt.title(plot_name)
         plt.legend()
