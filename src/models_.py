@@ -90,8 +90,9 @@ class Projecoes:
         """
         df = self.ts.train.reset_index()[[self.ts.date_col_name, self.ts.y_col]].copy()
         df.columns = ["ds", "y"]
-        model = fbprophet.Prophet(daily_seasonality=True, weekly_seasonality=True, yearly_seasonality=True)
-        model.fit(df)
+        # model = fbprophet.Prophet(daily_seasonality=True, weekly_seasonality=True, yearly_seasonality=True)
+        # model.fit(df)
+        model = prophet_model(df)
         self.models[model_name] = model
         future_fbp = model.make_future_dataframe(periods=self.ts.horizon, freq=self.ts.frequency, include_history=False)
         forecast = model.predict(future_fbp)
@@ -125,7 +126,8 @@ class Projecoes:
         """
         #df = self.ts.train.reset_index()[[self.ts.date_col_name, self.ts.y_col]].copy()
         series = self.ts.train
-        model = ExponentialSmoothing(series, seasonal_periods=self.ts.seasonality, trend=trend, seasonal=seasonal, freq=self.ts.frequency).fit()
+        #model = ExponentialSmoothing(series, seasonal_periods=self.ts.seasonality, trend=trend, seasonal=seasonal, freq=self.ts.frequency).fit()
+        model = holtwinters_model(series, seasonal_periods=self.ts.seasonality, trend=trend, seasonal=seasonal, freq=self.ts.frequency)
         self.models[model_name] = model
         forecast = model.forecast(self.ts.horizon)
         self.plot_forecasting(yhat=forecast, plot_name=f"{model_name}")
@@ -219,50 +221,67 @@ class Projecoes:
         return forecast
         
 class ts_cross_validation:
-    def __init__(self, ts: SerieTemporal):
-        self.ts = ts
-        self.training_dates = {}
+    def __init__(self, data):
+        #self.ts = ts
+        self.data = data
+        self.cutoff_dates = []
+        self.partitions = []
+        #self.models = models or []
 
     def slider(self,
                use_x_days: str,
-               horizon = None):
-        """Função para obter as partições de cross validation em séries temporais que serão utilizadas
-        pelos modelos individualmente.
-
-        Args:
-            use_x_days (str): 
-                Data a partir da qual os modelos serão treinados, i.e., a primeira rodada de cross validation 
-                utilizará "use_x_days" dias para treinar primeiro modelo de ordem cronológica.
-            horizon (_type_, optional): 
-                Horizonte de previsão do cross-validation em horas. Neste caso, é o mesmo valor de "steps", 
-                ou seja, depois de treinar o primeiro modelo utilizando "use_x_days", será considerado o
-                período ("use_x_days" + "horizon") para treinar o segundo modelo e prever as próximas "horizon"
-                horas.
-        """
-        if horizon is None:
-            horizon = pd.Timedelta(f"{self.ts.horizon} hours")
+               horizon: int):
+        # if horizon is None:
+        #     horizon = pd.Timedelta(f"{self.ts.horizon} hours")
         use_x_days = pd.Timedelta(use_x_days)
         horizon = pd.Timedelta(horizon)
-        min_date = self.ts.full_series.index.min()
-        max_date = self.ts.full_series.index.max()
+        min_date = self.data.index.min()
+        max_date = self.data.index.max()
         initial_training_date = min_date + use_x_days
-        print(initial_training_date, max_date, horizon)
         n_partitions = int(len(pd.date_range(initial_training_date, max_date, freq='h'))/(horizon.total_seconds()/3600))
-        d = {}
+        t = {}
         for i in range(1, n_partitions+1):
-            start = self.ts.full_series.index.max() - ((horizon*(i+1)) - pd.Timedelta("1 hour"))
+            start = self.data.index.max() - ((horizon*(i+1)) - pd.Timedelta("1 hour"))
+            self.cutoff_dates.append(start)
             end = start + (horizon - pd.Timedelta("1 hour"))
-            x = self.ts.full_series.loc[:end].index
-            d[start] = x
-        self.training_dates = d
+            x = self.data.loc[:end]#.index
+            #self.partitions.append(self.data.loc[x])
+            t[start] = {}
+            t[start]["treino"] = x
+            t[start]["teste"] = self.data.loc[end+pd.Timedelta("1 hour"):end+pd.Timedelta("49 hours")]
+        self.partitions = t
 
-    def add_model(self, model):
-        self.models.append(model)
+    # def add_model(self, model):
+    #     self.models.append(model)
 
-    def run_validation_models(self):
-        for model in self.models:
-            for partition in self.training_dates:
-                data = self.ts.train.loc[self.training_dates[partition]]
-                ts = SerieTemporal(data=data, y_col = "load_mwmed", date_col_name = "date", test_size=HORIZON, frequency='h')
-                fm = Projecoes(ts=ts)
-                getattr(fm, model.__name__)
+    # def run_validation_models(self):
+    #     for model in self.models:
+    #         for partition in self.training_dates:
+    #             data = self.ts.train.loc[self.training_dates[partition]]
+    #             ts = SerieTemporal(data=data, y_col = "load_mwmed", date_col_name = "date", test_size=HORIZON, frequency='h')
+    #             fm = Projecoes(ts=ts)
+    #             getattr(fm, model.__name__)
+
+def prophet_model(data):
+    """Fits a Prophet model that is used in Projecoes and in cross validation. 
+
+    Args:
+        data (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    model = fbprophet.Prophet(daily_seasonality=True, weekly_seasonality=True, yearly_seasonality=True)
+    model.fit(data)
+    return model
+
+def holtwinters_model(data, seasonal_periods, trend, seasonal, freq):
+    model = ExponentialSmoothing(data, seasonal_periods=seasonal_periods, trend=trend, seasonal=seasonal, freq=freq)
+    model = model.fit()
+    return model
+
+def autoarima_model():
+    pass
+
+def mstl_model():
+    pass
