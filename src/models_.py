@@ -255,3 +255,14 @@ class ts_cross_validation:
             x = self.ts.full_series.loc[:end].index
             d[start] = x
         self.training_dates = d
+
+    def add_model(self, model):
+        self.models.append(model)
+
+    def run_validation_models(self):
+        for model in self.models:
+            for partition in self.training_dates:
+                data = self.ts.train.loc[self.training_dates[partition]]
+                ts = SerieTemporal(data=data, y_col = "load_mwmed", date_col_name = "date", test_size=HORIZON, frequency='h')
+                fm = Projecoes(ts=ts)
+                getattr(fm, model.__name__)
