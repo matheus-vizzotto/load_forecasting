@@ -1,5 +1,3 @@
-# TODO: TRAZER RESTANTE DOS MODELOS PARA O MÓDULO Projecoes.
-
 import fbprophet
 from fbprophet.diagnostics import cross_validation
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing, ExponentialSmoothing, Holt
@@ -7,11 +5,12 @@ from statsforecast import StatsForecast
 from statsforecast.models import AutoARIMA
 from statsforecast import StatsForecast
 from statsforecast.models import MSTL
-from utils.data_wrangling import prepare_statsforecast_df
+from utils.data_wrangling import prepare_statsforecast_df, get_seasonal_components
 from metrics import get_metrics
 import pandas as pd
 import matplotlib.pyplot as plt
 from typing import List, Optional
+import json
 from datetime import datetime
 import joblib
 from paths import PATHS
@@ -20,6 +19,7 @@ import warnings
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 warnings.simplefilter('ignore', ConvergenceWarning)
 
+PROCESSED_DATA_DIR = PATHS['processed_data']
 FCS_PATH = PATHS["forecasts_data"]
 FORECASTS_FIG_DIR = PATHS['forecasts_figs']
 MODELS_DIR = PATHS['models']
@@ -36,6 +36,15 @@ class SerieTemporal:
                  test_size: int,
                  frequency: str,
                  seasonality: int=24):
+        """
+        Args:
+            data (pd.DataFrame): DataFrame onde o índice é a data-hora.
+            y_col (str): Nome da coluna com a variável-alvo.
+            date_col_name (str): Nome da coluna (índice) com a data-hora.
+            test_size (int): Tamanho da partição de teste.
+            frequency (str): Frequência da série. "H" ou "d".
+            seasonality (int, optional): Intervalo de tempo cíclico. Padrão de 24 (horas).
+        """
         self.data = data
         self.y_col = y_col
         self.full_series = data[y_col]
@@ -45,6 +54,7 @@ class SerieTemporal:
         self.test = data.iloc[-test_size:][y_col]
         self.frequency = frequency  
         self.seasonality = seasonality
+        self.seasonal_components = get_seasonal_components(data.index)
 
 class Projecoes:
     def __init__(self, 
@@ -230,7 +240,8 @@ class ts_cross_validation:
 
     def slider(self,
                use_x_days: str,
-               horizon: int):
+               horizon: int,
+               y_col: str):
         # if horizon is None:
         #     horizon = pd.Timedelta(f"{self.ts.horizon} hours")
         use_x_days = pd.Timedelta(use_x_days)
@@ -246,10 +257,21 @@ class ts_cross_validation:
             end = start + (horizon - pd.Timedelta("1 hour"))
             x = self.data.loc[:end]#.index
             #self.partitions.append(self.data.loc[x])
-            t[start] = {}
-            t[start]["treino"] = x
-            t[start]["teste"] = self.data.loc[end+pd.Timedelta("1 hour"):end+pd.Timedelta("49 hours")]
+            t[i] = {}
+            t[i]["treino"] = series_to_tuples(index=x.index.astype('str'), y=x.loc[:,y_col])
+            test = self.data.loc[end+pd.Timedelta("1 hour"):end+pd.Timedelta("49 hours")]
+            t[i]["teste"] = series_to_tuples(index=test.index.astype('str'), y=test.loc[:,y_col])
         self.partitions = t
+
+    def store_partitions(self):
+        if self.partitions:
+            file_path = os.path.join(PROCESSED_DATA_DIR, "cross_validation_partitions.json")
+            with open(file_path, 'w') as f:
+                json.dump(self.partitions, f)
+        else:
+            raise Exception("Atributo 'partitions' vazio: rode o cross-validation antes de salvar.")
+            
+        
 
     # def add_model(self, model):
     #     self.models.append(model)
@@ -285,3 +307,10 @@ def autoarima_model():
 
 def mstl_model():
     pass
+
+def series_to_tuples(index: pd.DatetimeIndex, 
+                     y: pd.Series):
+    if not isinstance(y, pd.Series):
+        raise Exception("Os valores não têm o tipo de Pandas Series. Tente selecionar a coluna de interesse.")
+    l_tuples = list(zip(index, y.values))
+    return l_tuples

@@ -641,7 +641,32 @@ class inmet_data:
         else:
             return df
     
+def get_seasonal_components(date_col: pd.Series, frequency="H") -> pd.DataFrame:
+    """Extrai os componentes sazonais da série diária ou horária
 
+    Args:
+        date_col (pd.Series): _description_
+        frequency (str, optional): Frequência da série. Defaults to "H". ["H", "d"]
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    if isinstance(date_col, pd.DatetimeIndex):
+        date_col = date_col.to_series()
+    y = pd.DataFrame()
+    y["data"] = date_col
+    y["ano"] = date_col.dt.year
+    y["trimestre"] = date_col.dt.quarter
+    y["mes"] = date_col.dt.month
+    if (frequency=="d") or (frequency=="H"):
+        y["semana_ano"] = date_col.dt.isocalendar().week
+        y["dia"] = date_col.dt.day
+        y["dia_ano"] = date_col.dt.dayofyear
+        y["dia_semana"] = date_col.dt.weekday + 1    # 1: segunda-feira; 7: domingo
+    if frequency=="H":
+        y["hora"] = date_col.dt.hour
+    #y["apagao"] = date_col.dt.year.apply(lambda x: 1 if x in [2001, 2002] else 0) # apagão de 2001 e 2002
+    return y
 # Função para pipeline de dados
 # class DataPipeline: 
 #     def __init__(self, data_source, transformation_funcs=None): 
