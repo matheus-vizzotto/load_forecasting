@@ -17,6 +17,7 @@ from paths import PATHS
 import os
 import warnings
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
+import copy
 warnings.simplefilter('ignore', ConvergenceWarning)
 
 PROCESSED_DATA_DIR = PATHS['processed_data']
@@ -258,18 +259,24 @@ class ts_cross_validation:
             x = self.data.loc[:end]#.index
             #self.partitions.append(self.data.loc[x])
             t[i] = {}
-            t[i]["treino"] = series_to_tuples(index=x.index.astype('str'), y=x.loc[:,y_col])
-            test = self.data.loc[end+pd.Timedelta("1 hour"):end+pd.Timedelta("49 hours")]
-            t[i]["teste"] = series_to_tuples(index=test.index.astype('str'), y=test.loc[:,y_col])
+            t[i]["treino"] = series_to_tuples(index=x.index, y=x.loc[:,y_col])
+            test = self.data.loc[end+pd.Timedelta("1 hour"):end+pd.Timedelta("48 hours")]
+            t[i]["teste"] = series_to_tuples(index=test.index, y=test.loc[:,y_col])
         self.partitions = t
 
     def store_partitions(self):
-        if self.partitions:
+        partitions_dict = copy.deepcopy(self.partitions)
+        if partitions_dict:
+            for partition in range(1, len(partitions_dict)+1):
+                partitions_dict[partition]["treino"] = [(str(x[0]),x[1]) for x in partitions_dict[partition]["treino"]]
+                partitions_dict[partition]["teste"] = [(str(x[0]),x[1]) for x in partitions_dict[partition]["teste"]]
             file_path = os.path.join(PROCESSED_DATA_DIR, "cross_validation_partitions.json")
             with open(file_path, 'w') as f:
-                json.dump(self.partitions, f)
+                json.dump(partitions_dict, f)
         else:
             raise Exception("Atributo 'partitions' vazio: rode o cross-validation antes de salvar.")
+        
+
             
         
 
