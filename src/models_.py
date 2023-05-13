@@ -63,7 +63,8 @@ class Projecoes:
         self.ts = ts
         self.ts_data = self.ts.train.reset_index()[[self.ts.date_col_name, self.ts.y_col]].copy()
         self.models = {}
-        self.forecasts = {}
+        self.is_forecasts = {}
+        self.oos_forecasts = {}
         self.forecasts_dir = FCS_PATH
         self.forecasts_fig_dir = FORECASTS_FIG_DIR
         self.models_dir = MODELS_DIR
@@ -119,7 +120,7 @@ class Projecoes:
         df.columns = ["ds", "y"]
         model = prophet_model(df)
         self.models[model_name] = model
-        future_fbp = model.make_future_dataframe(periods=self.ts.horizon, freq=self.ts.frequency, include_history=True)
+        future_fbp = model.make_future_dataframe(periods=self.ts.horizon, freq=self.ts.frequency, include_history=False)
         forecast = model.predict(future_fbp)[["ds", "yhat"]]
         if write:
             # OUT-OF-SAMPLE
@@ -132,7 +133,7 @@ class Projecoes:
         if save_model:
             model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
             joblib.dump(model, model_path)
-        return forecast
+        return [model_name, forecast.set_index("ds")]
     
     def hw_fit_forecast(self, 
                         trend: str='add',
@@ -155,20 +156,37 @@ class Projecoes:
         #model = ExponentialSmoothing(series, seasonal_periods=self.ts.seasonality, trend=trend, seasonal=seasonal, freq=self.ts.frequency).fit()
         model = holtwinters_model(series, seasonal_periods=self.ts.seasonality, trend=trend, damped_trend=damped_trend, seasonal=seasonal, freq=self.ts.frequency)
         self.models[model_name] = model
+        oos_forecast = model.forecast(self.ts.horizon)
+        is_forecast = model.predict(start=0, end=len(series)-1)
+        self.plot_forecasting(yhat=oos_forecast, plot_name=f"oos_{model_name}")
+        forecast_df = pd.DataFrame({"date": oos_forecast.index.values, "load_mwmed": oos_forecast.values})
+        self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
+        self.is_forecasts[model_name] = is_forecast
+        self.oos_forecasts[model_name] = is_forecast
+        self.models_metrics[model_name]["oos"] = get_metrics(oos_forecast, self.ts.test)
+        self.models_metrics[model_name]["is"] = get_metrics(is_forecast, self.ts.train)
+        self.plot_forecasting(oos_forecast, plot_name=f"oos_{model_name}")
+
+        series = self.ts.full_series.copy()
+        model = holtwinters_model(series, seasonal_periods=self.ts.seasonality, trend=trend, damped_trend=damped_trend, seasonal=seasonal, freq=self.ts.frequency)
+        self.models[model_name] = model
         forecast = model.forecast(self.ts.horizon)
-        self.plot_forecasting(yhat=forecast, plot_name=f"{model_name}")
-        forecast_df = pd.DataFrame({"date": forecast.index.values, "load_mwmed": forecast.values})
-        self.forecasts[model_name] = forecast_df
-        metrics = get_metrics(forecast, self.ts.test)
-        self.models_metrics[model_name] = metrics 
         if write:
+            # OUT-OF-SAMPLE
             now = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = os.path.join(self.forecasts_dir, f"{model_name}_fc_{now}.parquet")
-            forecast_df.to_parquet(file_path)
+            file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc_{now}.parquet")
+            oos_forecast = oos_forecast.reset_index()
+            oos_forecast.columns = ["date", "yhat"]
+            oos_forecast.reset_index().to_parquet(file_path)
+            # IN-SAMPLE
+            file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc_{now}.parquet")
+            is_forecast = is_forecast.reset_index()
+            is_forecast.columns = ["date", "yhat"]
+            is_forecast.reset_index().to_parquet(file_path)
         if save_model:
-            model_path = os.path.join(self.models_dir, f'{model_name}_joblib')
+            model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
             joblib.dump(model, model_path)
-        return forecast
+        return [model_name, forecast]
     
     def auto_arima_fit_forecast(self,
                                 level: List[int]=[90],

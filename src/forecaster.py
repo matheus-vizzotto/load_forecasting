@@ -43,9 +43,9 @@ def run_models():
     print("\t#### Prophet ####")
     fc_p = fm.prophet_fit_forecast()
     print(fm.models_metrics["Prophet"])
-    # print("\t#### Holt-Winters ####")
-    # fc_hw = fm.hw_fit_forecast()
-    # print(fm.models_metrics["HoltWinters"])
+    print("\t#### Holt-Winters ####")
+    fc_hw = fm.hw_fit_forecast()
+    print(fm.models_metrics["HoltWinters"])
     # print("\t#### MSTL ####")
     # fc_ml = fm.mstl_fit_forecast()
     # print(fm.models_metrics["MSTL"])
@@ -54,4 +54,5 @@ def run_models():
     # print(fm.models_metrics["AutoARIMA"])
     # model_path = os.path.join(MODELS_DIR, "AllModels_joblib")
     # joblib.dump(fm, model_path)
+    return [fc_p, fc_hw]
     
