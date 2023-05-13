@@ -105,24 +105,39 @@ class Projecoes:
         # model.fit(df)
         model = prophet_model(df)
         self.models[model_name] = model
-        future_fbp = model.make_future_dataframe(periods=self.ts.horizon, freq=self.ts.frequency, include_history=False)
-        forecast = model.predict(future_fbp)
-        self.forecasts[model_name] = forecast
-        metrics = get_metrics(forecast["yhat"], self.ts.test)
-        self.models_metrics[model_name] = metrics 
-        self.plot_forecasting(yhat=forecast["yhat"], plot_name=model_name)
+        future_fbp = model.make_future_dataframe(periods=self.ts.horizon, freq=self.ts.frequency, include_history=True)
+        forecast = model.predict(future_fbp)[["ds", "yhat"]].set_index("ds")
+        is_forecasts, oos_forecasts = forecast.iloc[:-self.ts.horizon], forecast.iloc[-self.ts.horizon:] # is = in_sample; oos = out_of_sample
+        self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
+        self.is_forecasts[model_name] = is_forecasts
+        self.oos_forecasts[model_name] = oos_forecasts
+        self.models_metrics[model_name]["oos"] = get_metrics(oos_forecasts, self.ts.test)
+        self.models_metrics[model_name]["is"] = get_metrics(is_forecasts, self.ts.train)
+        self.plot_forecasting(oos_forecasts, plot_name=f"oos_{model_name}")
+
+        df = self.ts.full_series.reset_index()[[self.ts.date_col_name, self.ts.y_col]].copy()
+        df.columns = ["ds", "y"]
+        model = prophet_model(df)
+        self.models[model_name] = model
+        future_fbp = model.make_future_dataframe(periods=self.ts.horizon, freq=self.ts.frequency, include_history=True)
+        forecast = model.predict(future_fbp)[["ds", "yhat"]]
         if write:
+            # OUT-OF-SAMPLE
             now = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = os.path.join(self.forecasts_dir, f"{model_name}_fc_{now}.parquet")
-            forecast.to_parquet(file_path)
+            file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc_{now}.parquet")
+            oos_forecasts.reset_index().to_parquet(file_path)
+            # IN-SAMPLE
+            file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc_{now}.parquet")
+            is_forecasts.reset_index().to_parquet(file_path)
         if save_model:
-            model_path = os.path.join(self.models_dir, f'{model_name}_joblib')
+            model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
             joblib.dump(model, model_path)
         return forecast
     
     def hw_fit_forecast(self, 
                         trend: str='add',
                         seasonal: str='add',
+                        damped_trend: bool=False,
                         write: bool=True,
                         save_model: bool=True,
                         model_name: str="HoltWinters"):
@@ -138,7 +153,7 @@ class Projecoes:
         #df = self.ts.train.reset_index()[[self.ts.date_col_name, self.ts.y_col]].copy()
         series = self.ts.train
         #model = ExponentialSmoothing(series, seasonal_periods=self.ts.seasonality, trend=trend, seasonal=seasonal, freq=self.ts.frequency).fit()
-        model = holtwinters_model(series, seasonal_periods=self.ts.seasonality, trend=trend, seasonal=seasonal, freq=self.ts.frequency)
+        model = holtwinters_model(series, seasonal_periods=self.ts.seasonality, trend=trend, damped_trend=damped_trend, seasonal=seasonal, freq=self.ts.frequency)
         self.models[model_name] = model
         forecast = model.forecast(self.ts.horizon)
         self.plot_forecasting(yhat=forecast, plot_name=f"{model_name}")
@@ -304,8 +319,8 @@ def prophet_model(data):
     model.fit(data)
     return model
 
-def holtwinters_model(data, seasonal_periods, trend, seasonal, freq):
-    model = ExponentialSmoothing(data, seasonal_periods=seasonal_periods, trend=trend, seasonal=seasonal, freq=freq)
+def holtwinters_model(data, seasonal_periods, trend, damped_trend, seasonal, freq):
+    model = ExponentialSmoothing(data, seasonal_periods=seasonal_periods, trend=trend, damped_trend=damped_trend, seasonal=seasonal, freq=freq)
     model = model.fit()
     return model
 
