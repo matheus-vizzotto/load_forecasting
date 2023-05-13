@@ -24,7 +24,7 @@ for model in forecasts:
     df_sub["model"] = model[0]
     df_sub["ingestion_date"] = datetime.now().strftime("%Y%m%d")
     df_forecasts = pd.concat([df_forecasts, df_sub])
-file_path = os.join(FCS_PATH, "forecasts.parquet")
+file_path = os.path.join(FCS_PATH, "forecasts.parquet")
 df_forecasts.to_parquet(file_path)
 
 
