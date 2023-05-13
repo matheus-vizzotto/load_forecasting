@@ -211,11 +211,26 @@ class Projecoes:
             )
         sf.fit(df_sf)
         self.models[model_name] = sf
-        forecast = sf.forecast(h=self.ts.horizon, level=level)
-        self.forecasts[model_name] = forecast
-        metrics = get_metrics(forecast[model_name], self.ts.test)
-        self.models_metrics[model_name] = metrics 
-        self.plot_forecasting(yhat=forecast[model_name], plot_name=f"{model_name}")
+        oos_forecast = sf.forecast(h=self.ts.horizon, level=level, fitted=True)[["ds", model_name]].set_index("ds")
+        is_forecast = sf.forecast_fitted_values()[["ds", model_name]].set_index("ds")
+        self.plot_forecasting(yhat=oos_forecast[model_name], plot_name=f"oos_{model_name}")
+        self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
+        self.is_forecasts[model_name] = is_forecast
+        self.oos_forecasts[model_name] = oos_forecast
+        self.models_metrics[model_name]["oos"] = get_metrics(oos_forecast, self.ts.test)
+        self.models_metrics[model_name]["is"] = get_metrics(is_forecast, self.ts.train)
+
+        df_sf = prepare_statsforecast_df(self.ts.full_series, ts_name_id)
+        sf = StatsForecast(
+            models=[AutoARIMA(season_length=self.ts.seasonality)],
+            freq=self.ts.frequency
+            )
+        sf.fit(df_sf)
+        # obter parâmetros
+        # sf.models[0].fit(df_sf.values)
+        # sf.models[0].model_["arma"]
+        self.models[model_name] = sf
+        forecast = sf.forecast(h=self.ts.horizon, level=level)[["ds", model_name]]
         if write:
             now = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_path = os.path.join(self.forecasts_dir, f"{model_name}_fc_{now}.parquet")
@@ -223,7 +238,7 @@ class Projecoes:
         if save_model:
             model_path = os.path.join(self.models_dir, f'{model_name}_joblib')
             joblib.dump(sf, model_path)
-        return forecast
+        return [model_name, forecast.set_index("ds")]
     
     def mstl_fit_forecast(self,
                    level=[90],
