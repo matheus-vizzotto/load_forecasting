@@ -1,10 +1,44 @@
 import pandas as pd
+from utils.data_wrangling import get_seasonal_components
+from typing import Optional
 import os
+
+class SerieTemporal:
+    """Classe para armazenar informações da série temporal.
+    frequency: str
+        Frequência da série temporal. Pode ser 'H' (horária) ou 'd' (diária).
+    """
+    def __init__(self,
+                 data: pd.DataFrame,
+                 y_col: str,
+                 date_col_name: str,
+                 test_size: int,
+                 frequency: str,
+                 seasonality: int=24):
+        """
+        Args:
+            data (pd.DataFrame): DataFrame onde o índice é a data-hora.
+            y_col (str): Nome da coluna com a variável-alvo.
+            date_col_name (str): Nome da coluna (índice) com a data-hora.
+            test_size (int): Tamanho da partição de teste.
+            frequency (str): Frequência da série. "H" ou "d".
+            seasonality (int, optional): Intervalo de tempo cíclico. Padrão de 24 (horas).
+        """
+        self.data = data
+        self.y_col = y_col
+        self.full_series = data[y_col]
+        self.date_col_name = date_col_name
+        self.train = data.iloc[:-test_size][y_col]
+        self.horizon = test_size
+        self.test = data.iloc[-test_size:][y_col]
+        self.frequency = frequency  
+        self.seasonality = seasonality
+        self.seasonal_components = get_seasonal_components(data.index)
 
 def train_test_split(df: pd.DataFrame, 
                      test: int, 
-                     multivariate=False, 
-                     y_col: str=None) -> pd.DataFrame:
+                     y_col: Optional[str],
+                     multivariate=False) -> pd.DataFrame:
     """Função para particionar dataframes uni ou multivariados
 
     Args:
@@ -63,4 +97,3 @@ def extract_model_cols(data: pd.DataFrame,
     """
     model_cols = data[[x for x in data.columns if model in x or date_col_name in x]]
     return model_cols
-

@@ -2,7 +2,8 @@ import pandas as pd
 from utils import data_wrangling as dw
 from utils import ts_wrangling as tw
 from utils.logger import timer_decorator
-from models_ import SerieTemporal, Projecoes
+from utils.ts_wrangling import SerieTemporal
+from models_ import Projecoes
 from models_ import (
     prophet_model,
     holtwinters_model
@@ -31,7 +32,6 @@ elif END is None:
     df_load = dw.pipeline(load).loc[INIT:,:]
 df_load = df_load.iloc[-PERIOD:,:]
 ts = SerieTemporal(data=df_load, y_col = "load_mwmed", date_col_name = "date", test_size=HORIZON, frequency='h')
-
 
 fm = Projecoes(ts=ts)
 

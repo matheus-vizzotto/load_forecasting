@@ -1,3 +1,4 @@
+from utils.ts_wrangling import SerieTemporal
 import fbprophet
 from fbprophet.diagnostics import cross_validation
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing, ExponentialSmoothing, Holt
@@ -24,38 +25,6 @@ PROCESSED_DATA_DIR = PATHS['processed_data']
 FCS_PATH = PATHS["forecasts_data"]
 FORECASTS_FIG_DIR = PATHS['forecasts_figs']
 MODELS_DIR = PATHS['models']
-
-class SerieTemporal:
-    """Classe para armazenar informações da série temporal.
-    frequency: str
-        Frequência da série temporal. Pode ser 'H' (horária) ou 'd' (diária).
-    """
-    def __init__(self,
-                 data: pd.DataFrame,
-                 y_col: str,
-                 date_col_name: str,
-                 test_size: int,
-                 frequency: str,
-                 seasonality: int=24):
-        """
-        Args:
-            data (pd.DataFrame): DataFrame onde o índice é a data-hora.
-            y_col (str): Nome da coluna com a variável-alvo.
-            date_col_name (str): Nome da coluna (índice) com a data-hora.
-            test_size (int): Tamanho da partição de teste.
-            frequency (str): Frequência da série. "H" ou "d".
-            seasonality (int, optional): Intervalo de tempo cíclico. Padrão de 24 (horas).
-        """
-        self.data = data
-        self.y_col = y_col
-        self.full_series = data[y_col]
-        self.date_col_name = date_col_name
-        self.train = data.iloc[:-test_size][y_col]
-        self.horizon = test_size
-        self.test = data.iloc[-test_size:][y_col]
-        self.frequency = frequency  
-        self.seasonality = seasonality
-        self.seasonal_components = get_seasonal_components(data.index)
 
 class Projecoes:
     def __init__(self, 
@@ -124,11 +93,11 @@ class Projecoes:
         forecast = model.predict(future_fbp)[["ds", "yhat"]]
         if write:
             # OUT-OF-SAMPLE
-            now = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc_{now}.parquet")
+            #now = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
             oos_forecasts.reset_index().to_parquet(file_path)
             # IN-SAMPLE
-            file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc_{now}.parquet")
+            file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc.parquet")
             is_forecasts.reset_index().to_parquet(file_path)
         if save_model:
             model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
@@ -172,13 +141,13 @@ class Projecoes:
         forecast = model.forecast(self.ts.horizon)
         if write:
             # OUT-OF-SAMPLE
-            now = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc_{now}.parquet")
+            #now = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
             oos_forecast = oos_forecast.reset_index()
             oos_forecast.columns = ["date", "yhat"]
             oos_forecast.reset_index().to_parquet(file_path)
             # IN-SAMPLE
-            file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc_{now}.parquet")
+            file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc.parquet")
             is_forecast = is_forecast.reset_index()
             is_forecast.columns = ["date", "yhat"]
             is_forecast.reset_index().to_parquet(file_path)
@@ -232,8 +201,8 @@ class Projecoes:
         self.models[model_name] = sf
         forecast = sf.forecast(h=self.ts.horizon, level=level)[["ds", model_name]]
         if write:
-            now = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = os.path.join(self.forecasts_dir, f"{model_name}_fc_{now}.parquet")
+            #now = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_path = os.path.join(self.forecasts_dir, f"{model_name}_fc.parquet")
             forecast.to_parquet(file_path)
         if save_model:
             model_path = os.path.join(self.models_dir, f'{model_name}_joblib')
@@ -283,8 +252,8 @@ class Projecoes:
         forecast = sf.forecast(h=self.ts.horizon, level=level)[["ds", model_name]]
         
         if write:
-            now = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = os.path.join(self.forecasts_dir, f"{model_name}_fc_{now}.parquet")
+            #now = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_path = os.path.join(self.forecasts_dir, f"{model_name}_fc.parquet")
             forecast.to_parquet(file_path)
         if save_model:
             model_path = os.path.join(self.models_dir, f'{model_name}_joblib')

@@ -8,7 +8,7 @@ from datetime import datetime
 
 FCS_PATH = PATHS["forecasts_data"]
 
-scraper.run_download()
+#scraper.run_download()
 forecasts = forecaster.run_models()
 
 plt.figure(figsize=(15,5))
