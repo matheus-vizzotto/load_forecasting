@@ -14,11 +14,11 @@ def run_download():
     load_data = dw.ons_data(freq='h', ano_inicio=ANO_INICIO, ano_fim=ANO_FIM, idreg="S")
     load_data.update(printer=True, write=True)
 
-    print("\t-METEOROLOGIA")
-    temp_data = dw.inmet_data(ano_inicio=ANO_INICIO, ano_fim=ANO_FIM)
-    temp_data.download()
-    temp_data.build_database()
-    temp_data.read_parquet()
-    temp_data.aggregate_by_hour()
+    # print("\t-METEOROLOGIA")
+    # temp_data = dw.inmet_data(ano_inicio=ANO_INICIO, ano_fim=ANO_FIM)
+    # temp_data.download()
+    # temp_data.build_database()
+    # temp_data.read_parquet()
+    # temp_data.aggregate_by_hour()
 
 # run_download()

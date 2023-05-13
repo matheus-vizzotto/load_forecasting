@@ -18,8 +18,8 @@ MODELS_DIR = PATHS['models']
 
 # IDENTIFICADORES
 INIT = "2012-01-01"
-END = "2023-04-30"
-#END = None
+#END = "2023-04-30"
+END = None
 PERIOD = 24*365
 HORIZON = 24*14
 
@@ -49,10 +49,10 @@ def run_models():
     print("\t#### MSTL ####")
     fc_ml = fm.mstl_fit_forecast()
     print(fm.models_metrics["MSTL"])
-    print("\t#### AutoARIMA ####")
-    fc_aa = fm.auto_arima_fit_forecast()
-    print(fm.models_metrics["AutoARIMA"])
-    model_path = os.path.join(MODELS_DIR, "AllModels_joblib")
-    joblib.dump(fm, model_path)
+    # print("\t#### AutoARIMA ####")
+    # fc_aa = fm.auto_arima_fit_forecast()
+    # print(fm.models_metrics["AutoARIMA"])
+    # model_path = os.path.join(MODELS_DIR, "AllModels_joblib")
+    # joblib.dump(fm, model_path)
     return [fc_p, fc_hw, fc_ml]
     
