@@ -103,7 +103,7 @@ class Projecoes:
         if save_model:
             model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
             joblib.dump(model, model_path)
-        return [model_name, forecast]
+        return [model_name, generate_forecast_df(forecast.index, forecast.values)]
     
     def hw_fit_forecast(self, 
                         trend: str='add',
@@ -155,7 +155,7 @@ class Projecoes:
         if save_model:
             model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
             joblib.dump(model, model_path)
-        return [model_name, forecast]
+        return [model_name, generate_forecast_df(forecast.index, forecast.values)]
     
     def auto_arima_fit_forecast(self,
                                 level: List[int]=[90],
@@ -200,15 +200,23 @@ class Projecoes:
         # sf.models[0].fit(df_sf.values)
         # sf.models[0].model_["arma"]
         self.models[model_name] = sf
-        forecast = sf.forecast(h=self.ts.horizon, level=level)[["ds", model_name]]
+        forecast = sf.forecast(h=self.ts.horizon, level=level).set_index("ds").loc[:,model_name]
         if write:
-            #now = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = os.path.join(self.forecasts_dir, f"{model_name}_fc.parquet")
-            forecast.to_parquet(file_path)
+             # OUT-OF-SAMPLE
+             #now = datetime.now().strftime("%Y%m%d_%H%M%S")
+             file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
+             oos_forecast = oos_forecast.reset_index()
+             oos_forecast.columns = ["date", "yhat"]
+             oos_forecast.reset_index().to_parquet(file_path)
+             # IN-SAMPLE
+             file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc.parquet")
+             is_forecast = is_forecast.reset_index()
+             is_forecast.columns = ["date", "yhat"]
+             is_forecast.reset_index().to_parquet(file_path)
         if save_model:
             model_path = os.path.join(self.models_dir, f'{model_name}_joblib')
             joblib.dump(sf, model_path)
-        return [model_name, forecast.set_index("ds")]
+        return [model_name, generate_forecast_df(forecast.index, forecast.values)]
     
     def mstl_fit_forecast(self,
                    level=[90],
@@ -250,16 +258,24 @@ class Projecoes:
             )
         sf.fit(df_sf)
         self.models[model_name] = sf
-        forecast = sf.forecast(h=self.ts.horizon, level=level)[["ds", model_name]]
+        forecast = sf.forecast(h=self.ts.horizon, level=level).set_index("ds").loc[:,model_name]
         
         if write:
+            # OUT-OF-SAMPLE
             #now = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = os.path.join(self.forecasts_dir, f"{model_name}_fc.parquet")
-            forecast.to_parquet(file_path)
+            file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
+            oos_forecast = oos_forecast.reset_index()
+            oos_forecast.columns = ["date", "yhat"]
+            oos_forecast.reset_index().to_parquet(file_path)
+            # IN-SAMPLE
+            file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc.parquet")
+            is_forecast = is_forecast.reset_index()
+            is_forecast.columns = ["date", "yhat"]
+            is_forecast.reset_index().to_parquet(file_path)
         if save_model:
             model_path = os.path.join(self.models_dir, f'{model_name}_joblib')
             joblib.dump(sf, model_path)
-        return [model_name, forecast.set_index("ds")]
+        return [model_name, generate_forecast_df(forecast.index, forecast.values)]
         
 class ts_cross_validation:
     def __init__(self, data):
