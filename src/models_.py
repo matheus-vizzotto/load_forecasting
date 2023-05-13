@@ -5,6 +5,7 @@ from statsmodels.tsa.holtwinters import SimpleExpSmoothing, ExponentialSmoothing
 from statsforecast import StatsForecast
 from statsforecast.models import AutoARIMA
 from statsforecast import StatsForecast
+import numpy as np
 from statsforecast.models import MSTL
 from utils.data_wrangling import prepare_statsforecast_df, get_seasonal_components
 from metrics import get_metrics
@@ -90,7 +91,7 @@ class Projecoes:
         model = prophet_model(df)
         self.models[model_name] = model
         future_fbp = model.make_future_dataframe(periods=self.ts.horizon, freq=self.ts.frequency, include_history=False)
-        forecast = model.predict(future_fbp)[["ds", "yhat"]]
+        forecast = model.predict(future_fbp).set_index("ds").loc[:,"yhat"]
         if write:
             # OUT-OF-SAMPLE
             #now = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -102,7 +103,7 @@ class Projecoes:
         if save_model:
             model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
             joblib.dump(model, model_path)
-        return [model_name, forecast.set_index("ds")]
+        return [model_name, forecast]
     
     def hw_fit_forecast(self, 
                         trend: str='add',
@@ -346,7 +347,33 @@ def mstl_model():
 
 def series_to_tuples(index: pd.DatetimeIndex, 
                      y: pd.Series):
+    """Converte uma pandas.Series em lista de tuplas para armazenamento em json.
+
+    Args:
+        index (pd.DatetimeIndex): _description_
+        y (pd.Series): _description_
+
+    Raises:
+        Exception: _description_
+
+    Returns:
+        _type_: _description_
+    """
     if not isinstance(y, pd.Series):
         raise Exception("Os valores não têm o tipo de Pandas Series. Tente selecionar a coluna de interesse.")
     l_tuples = list(zip(index, y.values))
     return l_tuples
+
+def generate_forecast_df(date: pd.DatetimeIndex, values: np.ndarray):
+    """Unifica a estrutura de armazenamento das projeções geradas a partir de uma pd.Series.
+    Atenção: a forma de tratamento de dados anterior pode fazer com que a "série", de apenas
+    uma coluna, seja na verdade um DataFrame; neste caso, tente utilizar x.set_index(<date>).loc[:<values>]
+    com os respectivos nomes das colunas.
+
+    Args:
+        index (list): _description_
+        values (list): _description_
+    """
+    col_names = ['datetime', 'yhat']
+    df = pd.DataFrame({col_names[0]: date, col_names[1]: values})
+    return df
