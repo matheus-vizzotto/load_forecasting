@@ -204,7 +204,7 @@ class Projecoes:
              self.oos_forecasts[model_name].to_parquet(file_path)
              # IN-SAMPLE
              file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc.parquet")
-             self.is_forecast[model_name].to_parquet(file_path)
+             self.is_forecasts[model_name].to_parquet(file_path)
         if save_model:
             model_path = os.path.join(self.models_dir, f'{model_name}_joblib')
             joblib.dump(sf, model_path)
