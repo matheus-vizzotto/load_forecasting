@@ -46,13 +46,13 @@ def run_models():
     print("\t#### Holt-Winters ####")
     fc_hw = fm.hw_fit_forecast()
     print(fm.models_metrics["HoltWinters"])
-    # print("\t#### MSTL ####")
-    # fc_ml = fm.mstl_fit_forecast()
-    # print(fm.models_metrics["MSTL"])
+    print("\t#### MSTL ####")
+    fc_ml = fm.mstl_fit_forecast()
+    print(fm.models_metrics["MSTL"])
     # print("\t#### AutoARIMA ####")
     # fc_aa = fm.auto_arima_fit_forecast()
     # print(fm.models_metrics["AutoARIMA"])
     # model_path = os.path.join(MODELS_DIR, "AllModels_joblib")
     # joblib.dump(fm, model_path)
-    return [fc_p, fc_hw]
+    return [fc_p, fc_hw, fc_ml]
     
