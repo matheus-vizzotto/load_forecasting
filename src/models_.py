@@ -251,7 +251,7 @@ class Projecoes:
         self.models[model_name] = sf
         oos_forecast = sf.forecast(h=self.ts.horizon, level=level, fitted=True)[["ds", model_name]].set_index("ds")
         is_forecast = sf.forecast_fitted_values()[["ds", model_name]].set_index("ds")
-        self.plot_forecasting(yhat=oos_forecast[model_name], plot_name=f"{model_name}")
+        self.plot_forecasting(yhat=oos_forecast[model_name], plot_name=f"oos_{model_name}")
         self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
         self.is_forecasts[model_name] = is_forecast
         self.oos_forecasts[model_name] = oos_forecast

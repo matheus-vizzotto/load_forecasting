@@ -21,7 +21,7 @@ INIT = "2012-01-01"
 END = "2023-04-30"
 #END = None
 PERIOD = 24*365
-HORIZON = 24*2
+HORIZON = 24*14
 
 # DADOS
 load = dw.ons_data(freq='h', ano_inicio=2012, ano_fim=2023, idreg="S")
