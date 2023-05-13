@@ -1,5 +1,6 @@
 import pandas as pd
 from utils import data_wrangling as dw
+from metrics import get_metrics
 from utils.ts_wrangling import SerieTemporal
 from models_ import Projecoes, ts_cross_validation
 from models_ import (

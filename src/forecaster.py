@@ -49,10 +49,10 @@ def run_models():
     print("\t#### MSTL ####")
     fc_ml = fm.mstl_fit_forecast()
     print(fm.models_metrics["MSTL"])
-    # print("\t#### AutoARIMA ####")
-    # fc_aa = fm.auto_arima_fit_forecast()
-    # print(fm.models_metrics["AutoARIMA"])
-    # model_path = os.path.join(MODELS_DIR, "AllModels_joblib")
-    # joblib.dump(fm, model_path)
-    return [fc_p, fc_hw, fc_ml]
+    print("\t#### AutoARIMA ####")
+    fc_aa = fm.auto_arima_fit_forecast()
+    print(fm.models_metrics["AutoARIMA"])
+    model_path = os.path.join(MODELS_DIR, "AllModels_joblib")
+    joblib.dump(fm, model_path)
+    return [fc_p, fc_hw, fc_ml, fc_aa]
     

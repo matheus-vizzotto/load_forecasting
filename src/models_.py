@@ -77,11 +77,11 @@ class Projecoes:
         model = prophet_model(df)
         self.models[model_name] = model
         future_fbp = model.make_future_dataframe(periods=self.ts.horizon, freq=self.ts.frequency, include_history=True)
-        forecast = model.predict(future_fbp)[["ds", "yhat"]].set_index("ds")
+        forecast = model.predict(future_fbp).set_index("ds").loc[:, "yhat"]
         is_forecasts, oos_forecasts = forecast.iloc[:-self.ts.horizon], forecast.iloc[-self.ts.horizon:] # is = in_sample; oos = out_of_sample
         self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
-        self.is_forecasts[model_name] = is_forecasts
-        self.oos_forecasts[model_name] = oos_forecasts
+        self.is_forecasts[model_name] = generate_forecast_df(is_forecasts.index, is_forecasts.values)
+        self.oos_forecasts[model_name] = generate_forecast_df(oos_forecasts.index, oos_forecasts.values)
         self.models_metrics[model_name]["oos"] = get_metrics(oos_forecasts, self.ts.test)
         self.models_metrics[model_name]["is"] = get_metrics(is_forecasts, self.ts.train)
         self.plot_forecasting(oos_forecasts, plot_name=f"oos_{model_name}")
@@ -96,10 +96,10 @@ class Projecoes:
             # OUT-OF-SAMPLE
             #now = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
-            oos_forecasts.reset_index().to_parquet(file_path)
+            self.oos_forecasts[model_name].to_parquet(file_path)
             # IN-SAMPLE
             file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc.parquet")
-            is_forecasts.reset_index().to_parquet(file_path)
+            self.is_forecasts[model_name].to_parquet(file_path)
         if save_model:
             model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
             joblib.dump(model, model_path)
@@ -131,8 +131,8 @@ class Projecoes:
         self.plot_forecasting(yhat=oos_forecast, plot_name=f"oos_{model_name}")
         forecast_df = pd.DataFrame({"date": oos_forecast.index.values, "load_mwmed": oos_forecast.values})
         self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
-        self.is_forecasts[model_name] = is_forecast
-        self.oos_forecasts[model_name] = oos_forecast
+        self.is_forecasts[model_name] = generate_forecast_df(is_forecast.index, is_forecast.values)
+        self.oos_forecasts[model_name] = generate_forecast_df(oos_forecast.index, oos_forecast.values)
         self.models_metrics[model_name]["oos"] = get_metrics(oos_forecast, self.ts.test)
         self.models_metrics[model_name]["is"] = get_metrics(is_forecast, self.ts.train)
         #self.plot_forecasting(oos_forecast, plot_name=f"oos_{model_name}")
@@ -144,14 +144,10 @@ class Projecoes:
             # OUT-OF-SAMPLE
             #now = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
-            oos_forecast = oos_forecast.reset_index()
-            oos_forecast.columns = ["date", "yhat"]
-            oos_forecast.reset_index().to_parquet(file_path)
+            self.oos_forecasts[model_name].to_parquet(file_path)
             # IN-SAMPLE
             file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc.parquet")
-            is_forecast = is_forecast.reset_index()
-            is_forecast.columns = ["date", "yhat"]
-            is_forecast.reset_index().to_parquet(file_path)
+            self.is_forecasts[model_name].to_parquet(file_path)
         if save_model:
             model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
             joblib.dump(model, model_path)
@@ -181,12 +177,12 @@ class Projecoes:
             )
         sf.fit(df_sf)
         self.models[model_name] = sf
-        oos_forecast = sf.forecast(h=self.ts.horizon, level=level, fitted=True)[["ds", model_name]].set_index("ds")
-        is_forecast = sf.forecast_fitted_values()[["ds", model_name]].set_index("ds")
-        self.plot_forecasting(yhat=oos_forecast[model_name], plot_name=f"oos_{model_name}")
+        oos_forecast = sf.forecast(h=self.ts.horizon, level=level, fitted=True).set_index("ds").loc[:, model_name]
+        is_forecast = sf.forecast_fitted_values().set_index("ds").loc[:, model_name]
+        self.plot_forecasting(yhat=oos_forecast, plot_name=f"oos_{model_name}")
         self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
-        self.is_forecasts[model_name] = is_forecast
-        self.oos_forecasts[model_name] = oos_forecast
+        self.is_forecasts[model_name] = generate_forecast_df(is_forecast.index, is_forecast.values)
+        self.oos_forecasts[model_name] = generate_forecast_df(oos_forecast.index, oos_forecast.values)
         self.models_metrics[model_name]["oos"] = get_metrics(oos_forecast, self.ts.test)
         self.models_metrics[model_name]["is"] = get_metrics(is_forecast, self.ts.train)
 
@@ -205,14 +201,10 @@ class Projecoes:
              # OUT-OF-SAMPLE
              #now = datetime.now().strftime("%Y%m%d_%H%M%S")
              file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
-             oos_forecast = oos_forecast.reset_index()
-             oos_forecast.columns = ["date", "yhat"]
-             oos_forecast.reset_index().to_parquet(file_path)
+             self.oos_forecasts[model_name].to_parquet(file_path)
              # IN-SAMPLE
              file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc.parquet")
-             is_forecast = is_forecast.reset_index()
-             is_forecast.columns = ["date", "yhat"]
-             is_forecast.reset_index().to_parquet(file_path)
+             self.is_forecast[model_name].to_parquet(file_path)
         if save_model:
             model_path = os.path.join(self.models_dir, f'{model_name}_joblib')
             joblib.dump(sf, model_path)
@@ -242,12 +234,12 @@ class Projecoes:
             )
         sf.fit(df_sf)
         self.models[model_name] = sf
-        oos_forecast = sf.forecast(h=self.ts.horizon, level=level, fitted=True)[["ds", model_name]].set_index("ds")
-        is_forecast = sf.forecast_fitted_values()[["ds", model_name]].set_index("ds")
-        self.plot_forecasting(yhat=oos_forecast[model_name], plot_name=f"oos_{model_name}")
+        oos_forecast = sf.forecast(h=self.ts.horizon, level=level, fitted=True).set_index("ds").loc[:, model_name]
+        is_forecast = sf.forecast_fitted_values().set_index("ds").loc[:, model_name]
+        self.plot_forecasting(yhat=oos_forecast, plot_name=f"oos_{model_name}")
         self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
-        self.is_forecasts[model_name] = is_forecast
-        self.oos_forecasts[model_name] = oos_forecast
+        self.is_forecasts[model_name] = generate_forecast_df(is_forecast.index, is_forecast.values)
+        self.oos_forecasts[model_name] = generate_forecast_df(oos_forecast.index, oos_forecast.values)
         self.models_metrics[model_name]["oos"] = get_metrics(oos_forecast, self.ts.test)
         self.models_metrics[model_name]["is"] = get_metrics(is_forecast, self.ts.train)
 
@@ -264,14 +256,10 @@ class Projecoes:
             # OUT-OF-SAMPLE
             #now = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
-            oos_forecast = oos_forecast.reset_index()
-            oos_forecast.columns = ["date", "yhat"]
-            oos_forecast.reset_index().to_parquet(file_path)
+            self.oos_forecasts[model_name].to_parquet(file_path)
             # IN-SAMPLE
             file_path = os.path.join(self.forecasts_dir, f"is_{model_name}_fc.parquet")
-            is_forecast = is_forecast.reset_index()
-            is_forecast.columns = ["date", "yhat"]
-            is_forecast.reset_index().to_parquet(file_path)
+            self.is_forecasts[model_name].to_parquet(file_path)
         if save_model:
             model_path = os.path.join(self.models_dir, f'{model_name}_joblib')
             joblib.dump(sf, model_path)

@@ -1,0 +1,68 @@
+
+
+Cross-validation com decoradores (chatGPT):
+from typing import List, Tuple
+import numpy as np
+
+def time_series_split(X: np.ndarray, n_splits: int, train_size: int, test_size: int) -> List[Tuple[np.ndarray]]:
+    """
+    Generate indices to split time series data into training and test sets.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples,)
+        Time series data to split.
+    n_splits : int
+        Number of splits. Must be at least 2.
+    train_size : int
+        Size of the training set.
+    test_size : int
+        Size of the test set.
+
+    Returns
+    -------
+    splits : list of tuples
+        List of (train, test) tuples. Each tuple contains the indices of the
+        training and test sets for that split.
+    """
+    n_samples = X.shape[0]
+    n_folds = n_splits - 1
+    fold_sizes = np.full(n_folds, (n_samples - train_size) // n_folds, dtype=int)
+    fold_sizes[:n_samples % n_folds] += 1
+    indices = np.arange(n_samples)
+    current = 0
+    splits = []
+    for fold_size in fold_sizes:
+        start, stop = current, current + fold_size
+        test_indices = indices[start:stop]
+        train_indices = np.concatenate((indices[:start], indices[stop:]))
+        train_end = train_indices[-1] + 1
+        if train_end + test_size >= n_samples:
+            # Ensure that the test set always has at least one sample
+            train_indices = train_indices[:-(train_end + test_size - n_samples)]
+        splits.append((train_indices, test_indices))
+        current = stop
+    return splits
+
+def cross_validation(func):
+    def wrapper(X, n_splits, train_size, test_size, *args, **kwargs):
+        splits = time_series_split(X, n_splits, train_size, test_size)
+        scores = []
+        for train_index, test_index in splits:
+            X_train, X_test = X[train_index], X[test_index]
+            score = func(X_train, X_test, *args, **kwargs)
+            scores.append(score)
+        return scores
+    return wrapper
+
+@cross_validation
+def run_arima(X_train, X_test, order):
+    """Function that runs an ARIMA model on the partitions given by cross_validation"""
+    # train the model on X_train
+    # evaluate the model on X_test
+    # return the score
+
+# Example usage
+X = np.random.randn(100)
+scores = run_arima(X, n_splits=5, train_size=80, test_size=20, order=(1, 0, 0))
+print(scores)
