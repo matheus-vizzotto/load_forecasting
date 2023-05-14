@@ -2,13 +2,13 @@ import pandas as pd
 from utils import data_wrangling as dw
 from utils import ts_wrangling as tw
 from utils.logger import timer_decorator
+from metrics import get_metrics, get_cumulative_metrics
 from utils.ts_wrangling import SerieTemporal
 from models_ import Projecoes
 from models_ import (
     prophet_model,
     holtwinters_model
 )
-from metrics import get_metrics
 import joblib
 from paths import PATHS
 import os
@@ -57,12 +57,18 @@ def run_models():
     return [fc_p, fc_hw, fc_ml, fc_aa]
     
 def run_evaluation():
-    oos_forecasts = [os.path.join(FCS_PATH, file) for file in os.listdir(FCS_PATH) if file.startswith('oos')]
+    files = [os.path.join(FCS_PATH, file) for file in os.listdir(FCS_PATH) if file.startswith('oos')]
     df_oos_forecasts = pd.DataFrame()
-    for oos_forecast in oos_forecasts:
+    for oos_forecast in files:
         df_oos_forecast = pd.read_parquet(oos_forecast)
         df_oos_forecast["model"] = oos_forecast.split("\\")[-1].split("_")[1]
         df_oos_forecasts = pd.concat([df_oos_forecasts, df_oos_forecast])
     df_fc_test = pd.merge(df_oos_forecasts, ts.full_series, left_on="datetime", right_index=True, how="left")
     df_fc_test.rename(columns={"load_mwmed": "y"}, inplace=True)
     df_fc_test["error"] = df_fc_test["y"] - df_fc_test["yhat"] 
+    cum_metrics = {}
+    for model in df_fc_test["model"].unique():
+        df_sub = df_fc_test[df_fc_test["model"]==model]
+        metrics = get_cumulative_metrics(df_sub["yhat"], df_sub["y"])
+        cum_metrics[model] = metrics
+    return cum_metrics

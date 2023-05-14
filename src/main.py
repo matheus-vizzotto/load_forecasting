@@ -26,8 +26,8 @@ for model in forecasts:
     df_sub["model"] = model[0]
     df_sub["ingestion_date"] = datetime.now().strftime("%Y%m%d")
     df_forecasts = pd.concat([df_forecasts, df_sub])
-file_path = os.path.join(FCS_PATH, "forecasts.parquet")
-df_forecasts.to_parquet(file_path)
+file_path = os.path.join(FCS_PATH, "forecasts.xlsx")
+df_forecasts.to_excel(file_path, index=False)
 
 # TODO: PASSAR PARA MÓDULO "FORECASTER"
 # EVALUATION 
