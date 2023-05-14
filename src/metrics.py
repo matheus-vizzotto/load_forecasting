@@ -63,3 +63,16 @@ def get_cumulative_metrics(X: pd.DataFrame,
         cum_metrics.append(metrics)
     df_cum_metrics = pd.DataFrame(cum_metrics)
     return df_cum_metrics
+
+def get_best_model(X: pd.DataFrame):
+    """Recebe o DataFrame gerado por run_e valuation (get_cumulative_metrics
+    para todos os modelos e retorna o modelo com melhor desempenho geral no 
+    final do horizonte de previsão.
+
+    Args:
+        X (pd.DataFrame): _description_
+    """
+    df_horizon = X[X["i"]==X["i"].max()].set_index("model").T
+    df_horizon["best_model"] = df_horizon.idxmin(axis=1)
+    best_model = df_horizon.groupby("best_model").size().sort_values().to_frame().iloc[-1].name
+    return best_model

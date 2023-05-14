@@ -3,6 +3,8 @@ from utils import data_wrangling as dw
 from utils import ts_wrangling as tw
 from utils.logger import timer_decorator
 from metrics import get_metrics, get_cumulative_metrics
+import matplotlib.pyplot as plt
+import seaborn as sns
 from utils.ts_wrangling import SerieTemporal
 from models_ import Projecoes
 from models_ import (
@@ -16,6 +18,8 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 FCS_PATH = PATHS["forecasts_data"]
 MODELS_DIR = PATHS['models']
+FORECASTS_FIG_DIR = PATHS['forecasts_figs']
+EVALUATIONS_FIG_DIR = PATHS['evaluation_figs']
 
 # IDENTIFICADORES
 INIT = "2012-01-01"
@@ -58,17 +62,28 @@ def run_models():
     
 def run_evaluation():
     files = [os.path.join(FCS_PATH, file) for file in os.listdir(FCS_PATH) if file.startswith('oos')]
+    # CONCATENA PROJEÇÕES
     df_oos_forecasts = pd.DataFrame()
     for oos_forecast in files:
         df_oos_forecast = pd.read_parquet(oos_forecast)
         df_oos_forecast["model"] = oos_forecast.split("\\")[-1].split("_")[1]
         df_oos_forecasts = pd.concat([df_oos_forecasts, df_oos_forecast])
+    # ADICIONA VALORES OBSERVADOS
     df_fc_test = pd.merge(df_oos_forecasts, ts.full_series, left_on="datetime", right_index=True, how="left")
     df_fc_test.rename(columns={"load_mwmed": "y"}, inplace=True)
     df_fc_test["error"] = df_fc_test["y"] - df_fc_test["yhat"] 
-    cum_metrics = {}
+    # OBTÉM MÉTRICAS CUMULATIVAS
+    df_all_metrics = pd.DataFrame()
     for model in df_fc_test["model"].unique():
         df_sub = df_fc_test[df_fc_test["model"]==model]
-        metrics = get_cumulative_metrics(df_sub["yhat"], df_sub["y"])
-        cum_metrics[model] = metrics
-    return cum_metrics
+        metrics = get_cumulative_metrics(df_sub, "datetime", "yhat", "y", model)
+        df_all_metrics = pd.concat([df_all_metrics, metrics])
+    metrics = list(get_metrics(df_fc_test["yhat"], df_fc_test["y"]).keys())
+    # GERA GRÁFICOS
+    for metric in metrics:
+        plt.figure(figsize=(15,5))
+        sns.lineplot(data=df_all_metrics, y=metric, x="i", hue="model")
+        plt.title(metric)
+        file_path = os.path.join(EVALUATIONS_FIG_DIR, f"evaluation_{metric}.png")
+        plt.savefig(file_path)
+    return df_all_metrics

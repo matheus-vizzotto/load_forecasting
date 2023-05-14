@@ -11,6 +11,7 @@ PROCESSED_DATA_DIR = os.path.join(DATA_DIR, "03_processed")
 FORECASTS_DATA_DIR = os.path.join(DATA_DIR, "04_forecasts")
 MODELS_DIR = os.path.join(ROOT_DIR, "models")
 FORECASTS_FIG_DIR = os.path.join(ROOT_DIR, "reports", "figures", "forecasts")
+EVALUATIONS_FIG_DIR = os.path.join(ROOT_DIR, "reports", "figures", "evaluation")
 LOGS_DIR = os.path.join(ROOT_DIR, "src", "logs")
 
 PATHS = {
@@ -22,6 +23,7 @@ PATHS = {
     'forecasts_data': FORECASTS_DATA_DIR,
     'models': MODELS_DIR,
     'forecasts_figs': FORECASTS_FIG_DIR,
+    'evaluation_figs': EVALUATIONS_FIG_DIR,
     'logs': LOGS_DIR
     #'logs': LOGS_DIR,
     #'config': CONFIG_FILE,
