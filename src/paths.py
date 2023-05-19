@@ -25,9 +25,4 @@ PATHS = {
     'forecasts_figs': FORECASTS_FIG_DIR,
     'evaluation_figs': EVALUATIONS_FIG_DIR,
     'logs': LOGS_DIR
-    #'logs': LOGS_DIR,
-    #'config': CONFIG_FILE,
-    #'readme': README_FILE,
-    #'pandas': PANDAS_PATH,
-    #'numpy': NUMPY_PATH
 }

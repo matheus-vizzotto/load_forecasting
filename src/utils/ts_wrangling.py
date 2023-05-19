@@ -79,7 +79,20 @@ def to_supervised_frame(df: pd.DataFrame,
     Returns:
         pd.DataFrame: _description_
     """
-    pass
+    series = df.loc[:,y_col]
+    cols = []
+    for i in range(n_in, 0, -1):
+        lag = series.shift(i)
+        lag.name = f"{y_col}(t-{i})"
+        cols.append(lag)
+    for i in range(0,n_out+1):
+        lag = series.shift(i)
+        lag.name = f"{y_col}(t+{i})"
+        cols.append(lag)
+    lags_df = pd.concat(cols, axis=1)
+    if dropnan:
+        lags_df.dropna(inplace=True)
+    return lags_df
 
 def extract_model_cols(data: pd.DataFrame, 
                        model: str, 
