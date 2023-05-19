@@ -71,7 +71,12 @@ def run_evaluation():
     # ADICIONA VALORES OBSERVADOS
     df_fc_test = pd.merge(df_oos_forecasts, ts.full_series, left_on="datetime", right_index=True, how="left")
     df_fc_test.rename(columns={"load_mwmed": "y"}, inplace=True)
-    df_fc_test["error"] = df_fc_test["y"] - df_fc_test["yhat"] 
+    df_fc_test["error"] = df_fc_test["y"] - df_fc_test["yhat"]
+    plt.figure(figsize=(15,5))
+    sns.violinplot(data=df_fc_test, x="model", y="error")
+    plt.title("Dispersão dos erros de previsão")
+    file_path = os.path.join(EVALUATIONS_FIG_DIR, f"errors_violin.png")
+    plt.savefig(file_path)
     # OBTÉM MÉTRICAS CUMULATIVAS
     df_all_metrics = pd.DataFrame()
     for model in df_fc_test["model"].unique():

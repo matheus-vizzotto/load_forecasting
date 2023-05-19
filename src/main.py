@@ -11,9 +11,11 @@ FCS_PATH = PATHS["forecasts_data"]
 FORECASTS_DATA_DIR = PATHS['forecasts_data'] 
 
 # DOWNLOAD DATA
-scraper.run_download()
+#scraper.run_download()
+
 # RUN MODELS
 forecasts = forecaster.run_models()
+
 # PLOT FORECASTS
 plt.figure(figsize=(15,5))
 for i in range(len(forecasts)):
@@ -30,6 +32,7 @@ for model in forecasts:
     df_forecasts = pd.concat([df_forecasts, df_sub])
 file_path = os.path.join(FCS_PATH, "forecasts.xlsx")
 df_forecasts.to_excel(file_path, index=False)
+
 # GET THE MODEL WITH THE LOWEST ERROR METRICS
 all_metrics = forecaster.run_evaluation()
 best_model = metrics.get_best_model(all_metrics)
