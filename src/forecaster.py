@@ -39,11 +39,11 @@ def load_data():
     df_load = df_load.iloc[-PERIOD:,:]
     ts = SerieTemporal(data=df_load, y_col = "load_mwmed", date_col_name = "date", test_size=HORIZON, frequency='h')
     return ts
-
 ts = load_data()
-fm = Projecoes(ts=ts)
 
 # MODELOS
+fm = Projecoes(ts=ts)
+
 @timer_decorator
 def run_models():
     print(f"\tPeríodo: {df_load.index.min()} a {df_load.index.max()}")

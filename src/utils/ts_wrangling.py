@@ -36,7 +36,8 @@ class SerieTemporal:
         
     @property
     def seasonal_components(self):
-        return get_seasonal_components(self.data.index)
+        x = pd.concat([get_seasonal_components(self.data.index), self.data.loc[:,self.y_col]], axis=1)
+        return x
 
 def train_test_split(df: pd.DataFrame, 
                      test: int, 

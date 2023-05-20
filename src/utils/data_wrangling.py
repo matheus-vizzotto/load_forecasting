@@ -667,6 +667,9 @@ def get_seasonal_components(date_col: pd.Series, frequency="H") -> pd.DataFrame:
         y["hora"] = date_col.dt.hour
     #y["apagao"] = date_col.dt.year.apply(lambda x: 1 if x in [2001, 2002] else 0) # apagão de 2001 e 2002
     return y
+
+
+
 # Função para pipeline de dados
 # class DataPipeline: 
 #     def __init__(self, data_source, transformation_funcs=None): 

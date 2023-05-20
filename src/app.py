@@ -25,8 +25,9 @@ if choice=="Dados":
         pass
 if choice=="Análise exploratória":
     st.title("Análise exploratória")
-    st.subheader("Série em nível:")
+    st.subheader(f"Período: {ts.data.index.min()} a {ts.data.index.max()}")
     level_plot = px.line(ts.data, y=["load_mwmed"])
+    level_plot.update_layout(title='Série em nível')
     st.plotly_chart(level_plot)
 
 if choice=="Modelos":
