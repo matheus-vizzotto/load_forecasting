@@ -30,14 +30,17 @@ PERIOD = 24*365
 HORIZON = 24*14
 
 # DADOS
-load = dw.ons_data(freq='h', ano_inicio=2012, ano_fim=2023, idreg="S")
-if END:
-    df_load = dw.pipeline(load).loc[INIT:END,:]
-elif END is None:
-    df_load = dw.pipeline(load).loc[INIT:,:]
-df_load = df_load.iloc[-PERIOD:,:]
-ts = SerieTemporal(data=df_load, y_col = "load_mwmed", date_col_name = "date", test_size=HORIZON, frequency='h')
+def load_data():
+    load = dw.ons_data(freq='h', ano_inicio=2012, ano_fim=2023, idreg="S")
+    if END:
+        df_load = dw.pipeline(load).loc[INIT:END,:]
+    elif END is None:
+        df_load = dw.pipeline(load).loc[INIT:,:]
+    df_load = df_load.iloc[-PERIOD:,:]
+    ts = SerieTemporal(data=df_load, y_col = "load_mwmed", date_col_name = "date", test_size=HORIZON, frequency='h')
+    return ts
 
+ts = load_data()
 fm = Projecoes(ts=ts)
 
 # MODELOS
