@@ -33,7 +33,10 @@ class SerieTemporal:
         self.test = data.iloc[-test_size:][y_col]
         self.frequency = frequency  
         self.seasonality = seasonality
-        self.seasonal_components = get_seasonal_components(data.index)
+        
+    @property
+    def seasonal_components(self):
+        return get_seasonal_components(self.data.index)
 
 def train_test_split(df: pd.DataFrame, 
                      test: int, 
