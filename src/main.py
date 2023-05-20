@@ -31,7 +31,7 @@ for model in forecasts:
     df_sub["ingestion_date"] = datetime.now().strftime("%Y%m%d")
     df_forecasts = pd.concat([df_forecasts, df_sub])
 file_path = os.path.join(FCS_PATH, "forecasts.xlsx")
-df_forecasts.to_excel(file_path, index=False)
+#df_forecasts.to_excel(file_path, index=False)
 
 # GET THE MODEL WITH THE LOWEST ERROR METRICS
 all_metrics = forecaster.run_evaluation()

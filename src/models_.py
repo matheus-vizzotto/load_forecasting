@@ -5,8 +5,12 @@ from statsmodels.tsa.holtwinters import SimpleExpSmoothing, ExponentialSmoothing
 from statsforecast import StatsForecast
 from statsforecast.models import AutoARIMA
 from statsforecast import StatsForecast
+import lightgbm as lgb
+import xgboost as xgb
 import numpy as np
 from statsforecast.models import MSTL
+from sklearn.tree import DecisionTreeRegressor
+from sktime.forecasting.compose import make_reduction
 from utils.data_wrangling import prepare_statsforecast_df, get_seasonal_components
 from metrics import get_metrics
 import pandas as pd
@@ -264,7 +268,101 @@ class Projecoes:
             model_path = os.path.join(self.models_dir, f'{model_name}_joblib')
             joblib.dump(sf, model_path)
         return [model_name, generate_forecast_df(forecast.index, forecast.values)]
-        
+    
+    def dectrees_fit_forecast(self,
+                              write: bool=True,
+                              save_model: bool=True,
+                              model_name = "ArvoresDecisao"):
+        """Modelo de árvores de decisão que utiliza a série temporal em formato
+        de dados tabulares.
+
+        Args:
+            write (bool, optional): _description_. Defaults to True.
+            save_model (bool, optional): _description_. Defaults to True.
+            model_name (str, optional): _description_. Defaults to "ArvoresDecisao".
+
+        Returns:
+            _type_: _description_
+        """
+        model, oos_forecast = decisiontrees_model(data=self.ts.train, y_col="load_mwmed", win_len=60, horizon=self.ts.horizon)
+        self.models[model_name] = model
+        self.plot_forecasting(yhat=oos_forecast, plot_name=f"oos_{model_name}")
+        self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
+        self.oos_forecasts[model_name] = generate_forecast_df(oos_forecast.index, oos_forecast.values)
+        self.models_metrics[model_name]["oos"] = get_metrics(oos_forecast, self.ts.test)
+        model, forecast = decisiontrees_model(data=self.ts.full_series, y_col="load_mwmed", win_len=60, horizon=self.ts.horizon)
+        if write:
+            # OUT-OF-SAMPLE
+            #now = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
+            self.oos_forecasts[model_name].to_parquet(file_path)
+        if save_model:
+            model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
+            joblib.dump(model, model_path)
+        return [model_name, generate_forecast_df(forecast.index, forecast.values)]
+    
+    def xgboost_fit_forecast(self,
+                             write: bool=True,
+                             save_model: bool=True,
+                             model_name = "XGBoost"):
+        """Modelo XGBoost que utiliza a série temporal em formato de dados tabulares.
+
+        Args:
+            write (bool, optional): _description_. Defaults to True.
+            save_model (bool, optional): _description_. Defaults to True.
+            model_name (str, optional): _description_. Defaults to "ArvoresDecisao".
+
+        Returns:
+            _type_: _description_
+        """
+        model, oos_forecast = xgboost_model(data=self.ts.train, y_col="load_mwmed", win_len=60, horizon=self.ts.horizon)
+        self.models[model_name] = model
+        self.plot_forecasting(yhat=oos_forecast, plot_name=f"oos_{model_name}")
+        self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
+        self.oos_forecasts[model_name] = generate_forecast_df(oos_forecast.index, oos_forecast.values)
+        self.models_metrics[model_name]["oos"] = get_metrics(oos_forecast, self.ts.test)
+        model, forecast = xgboost_model(data=self.ts.full_series, y_col="load_mwmed", win_len=60, horizon=self.ts.horizon)
+        if write:
+            # OUT-OF-SAMPLE
+            #now = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
+            self.oos_forecasts[model_name].to_parquet(file_path)
+        if save_model:
+            model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
+            joblib.dump(model, model_path)
+        return [model_name, generate_forecast_df(forecast.index, forecast.values)]
+    
+    def lightgbm_fit_forecast(self,
+                             write: bool=True,
+                             save_model: bool=True,
+                             model_name = "LightGBM"):
+        """Modelo XGBoost que utiliza a série temporal em formato de dados tabulares.
+
+        Args:
+            write (bool, optional): _description_. Defaults to True.
+            save_model (bool, optional): _description_. Defaults to True.
+            model_name (str, optional): _description_. Defaults to "ArvoresDecisao".
+
+        Returns:
+            _type_: _description_
+        """
+        model, oos_forecast = lightgbm_model(data=self.ts.train, y_col="load_mwmed", win_len=60, horizon=self.ts.horizon)
+        self.models[model_name] = model
+        self.plot_forecasting(yhat=oos_forecast, plot_name=f"oos_{model_name}")
+        self.is_forecasts[model_name] = self.oos_forecasts[model_name] = self.models_metrics[model_name] = self.models_metrics[model_name]["oos"] = self.models_metrics[model_name]["is"] = {}
+        self.oos_forecasts[model_name] = generate_forecast_df(oos_forecast.index, oos_forecast.values)
+        self.models_metrics[model_name]["oos"] = get_metrics(oos_forecast, self.ts.test)
+        model, forecast = lightgbm_model(data=self.ts.full_series, y_col="load_mwmed", win_len=60, horizon=self.ts.horizon)
+        if write:
+            # OUT-OF-SAMPLE
+            #now = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_path = os.path.join(self.forecasts_dir, f"oos_{model_name}_fc.parquet")
+            self.oos_forecasts[model_name].to_parquet(file_path)
+        if save_model:
+            model_path = os.path.join(self.models_dir, f"{model_name}_joblib")
+            joblib.dump(model, model_path)
+        return [model_name, generate_forecast_df(forecast.index, forecast.values)]
+
 class ts_cross_validation:
     def __init__(self, data):
         #self.ts = ts
@@ -349,6 +447,66 @@ def autoarima_model():
 def mstl_model():
     pass
 
+def decisiontrees_model(data: pd.DataFrame,
+                        y_col: str,
+                        win_len: int,
+                        horizon: int,
+                        strat: str="recursive"):
+    """_summary_
+
+    Args:
+        data (pd.DataFrame): _description_
+        win_len (int): _description_
+        strat (recursive): _description_
+    """
+    #X = data.loc[:,y_col]
+    X = data.asfreq('H')
+    regressor = DecisionTreeRegressor(random_state = 0)
+    model = make_reduction(regressor, window_length=win_len, strategy=strat)
+    model.fit(X)
+    y = model.predict(fh=[x for x in range(1,horizon+1)])
+    return model, y
+
+def xgboost_model(data: pd.DataFrame,
+                        y_col: str,
+                        win_len: int,
+                        horizon: int,
+                        strat: str="recursive"):
+    """_summary_
+
+    Args:
+        data (pd.DataFrame): _description_
+        win_len (int): _description_
+        strat (recursive): _description_
+    """
+    #X = data.loc[:,y_col]
+    X = data.asfreq('H')
+    regressor = xgb.XGBRegressor(objective='reg:tweedie', n_estimators=1000)
+    model = make_reduction(regressor, window_length=win_len, strategy=strat)
+    model.fit(X)
+    y = model.predict(fh=[x for x in range(1,horizon+1)])
+    return model, y
+
+def lightgbm_model(data: pd.DataFrame,
+                   y_col: str,
+                   win_len: int,
+                   horizon: int,
+                   strat: str="recursive"):
+    """_summary_
+
+    Args:
+        data (pd.DataFrame): _description_
+        win_len (int): _description_
+        strat (recursive): _description_
+    """
+    #X = data.loc[:,y_col]
+    X = data.asfreq('H')
+    regressor = lgb.LGBMRegressor(objective='regression', n_estimators=1000)
+    model = make_reduction(regressor, window_length=win_len, strategy=strat)
+    model.fit(X)
+    y = model.predict(fh=[x for x in range(1,horizon+1)])
+    return model, y
+
 def series_to_tuples(index: pd.DatetimeIndex, 
                      y: pd.Series):
     """Converte uma pandas.Series em lista de tuplas para armazenamento em json.
@@ -367,6 +525,7 @@ def series_to_tuples(index: pd.DatetimeIndex,
         raise Exception("Os valores não têm o tipo de Pandas Series. Tente selecionar a coluna de interesse.")
     l_tuples = list(zip(index, y.values))
     return l_tuples
+
 
 def generate_forecast_df(date: pd.DatetimeIndex, values: np.ndarray):
     """Unifica a estrutura de armazenamento das projeções geradas a partir de uma pd.Series.

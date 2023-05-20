@@ -87,7 +87,10 @@ def to_supervised_frame(df: pd.DataFrame,
         cols.append(lag)
     for i in range(0,n_out+1):
         lag = series.shift(i)
-        lag.name = f"{y_col}(t+{i})"
+        if i==0:
+            lag.name = f"{y_col}(t)"
+        else:
+            lag.name = f"{y_col}(t+{i})"
         cols.append(lag)
     lags_df = pd.concat(cols, axis=1)
     if dropnan:
