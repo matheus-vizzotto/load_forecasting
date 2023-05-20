@@ -23,12 +23,23 @@ if choice=="Dados":
         st.dataframe(ts.data)
     elif web_choice:
         pass
+
 if choice=="Análise exploratória":
     st.title("Análise exploratória")
     st.subheader(f"Período: {ts.data.index.min()} a {ts.data.index.max()}")
     level_plot = px.line(ts.data, y=["load_mwmed"])
     level_plot.update_layout(title='Série em nível')
     st.plotly_chart(level_plot)
+    seasonal_data = ts.seasonal_components
+    for col in seasonal_data.columns:
+        if (col=="data") or (col=="load_mwmed"):
+            continue
+        else:
+            plot = px.scatter(seasonal_data, x=col, y="load_mwmed", hover_data=[seasonal_data["data"]])
+            plot.update_layout(title=col)
+            # median = seasonal_data.groupby(col)["load_mwmed"].median()
+            # plot.add_trace(px.line(median))
+            st.plotly_chart(plot)
 
 if choice=="Modelos":
     pass

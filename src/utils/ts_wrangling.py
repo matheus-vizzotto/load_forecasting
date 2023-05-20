@@ -1,5 +1,8 @@
 import pandas as pd
 from utils.data_wrangling import get_seasonal_components
+import matplotlib.pyplot as plt
+from statsforecast import StatsForecast
+from statsforecast.models import MSTL, AutoARIMA
 from typing import Optional
 import os
 
@@ -100,6 +103,27 @@ def to_supervised_frame(df: pd.DataFrame,
     if dropnan:
         lags_df.dropna(inplace=True)
     return lags_df
+    
+def seasonal_decompose(data: pd.DataFrame,
+                       y_col: str,
+                       date_col: str):
+    X = data[[date_col, y_col]]
+    X.columns = ["ds", "y"]
+    X["unique_id"] = "hourly_load"
+    models = [
+        MSTL(
+            season_length=[24, 24 * 7], 
+            trend_forecaster=AutoARIMA()
+            )
+    ]
+    sf = StatsForecast(
+        models=models,
+        freq='H'
+    )
+    mstl_model = sf.fit(X)
+    mstl_model.fitted_[0, 0].model_.tail(24 * 28).plot(subplots=True, grid=True)
+    plt.tight_layout()
+    plt.show()
 
 def extract_model_cols(data: pd.DataFrame, 
                        model: str, 
