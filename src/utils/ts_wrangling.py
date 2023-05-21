@@ -1,5 +1,6 @@
 import pandas as pd
 from utils.data_wrangling import get_seasonal_components
+import statsmodels as sm
 import matplotlib.pyplot as plt
 from statsforecast import StatsForecast
 from statsforecast.models import MSTL, AutoARIMA
@@ -121,9 +122,16 @@ def seasonal_decompose(data: pd.DataFrame,
         freq='H'
     )
     mstl_model = sf.fit(X)
-    mstl_model.fitted_[0, 0].model_.tail(24 * 28).plot(subplots=True, grid=True)
-    plt.tight_layout()
-    plt.show()
+    y = mstl_model.fitted_[0, 0].model_#.tail(24 * 28).plot(subplots=True, grid=True)
+    return y 
+
+def get_acf_pacf(data: pd.DataFrame,
+                       y_col: str):
+    acf_values = sm.tsa.stattools.acf(data.loc[:, y_col])
+    pacf_values = sm.tsa.stattools.pacf(data.loc[:, y_col])
+    lags = range(len(acf_values))
+    df = pd.DataFrame({'Lag': lags, 'ACF': acf_values, 'PACF': pacf_values})
+    return df
 
 def extract_model_cols(data: pd.DataFrame, 
                        model: str, 
