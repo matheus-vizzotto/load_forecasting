@@ -51,7 +51,7 @@ if choice=="Análise exploratória":
         if col=="data":
             continue
         else:
-            plot = px.line(x=ts.data.index[-last_obs:], y=decomposed_df.loc[:,col])
+            plot = px.line(x=ts.data.index[-last_obs:], y=decomposed_df.loc[:,col], hover_data=[seasonal_data["dia_semana"].tail(last_obs)])
             plot.update_layout(title=col)
             st.plotly_chart(plot)
     st.subheader("Análise de autocorrelação")
