@@ -46,7 +46,7 @@ fm = Projecoes(ts=ts)
 
 @timer_decorator
 def run_models():
-    print(f"\tPeríodo: {df_load.index.min()} a {df_load.index.max()}")
+    print(f"\tPeríodo: {ts.data.index.min()} a {ts.data.index.max()}")
     print("RODANDO MODELOS")
     print("\t#### Prophet ####")
     fc_p = fm.prophet_fit_forecast()
@@ -90,6 +90,8 @@ def run_evaluation():
         df_sub = df_fc_test[df_fc_test["model"]==model]
         metrics = get_cumulative_metrics(df_sub, "datetime", "yhat", "y", model)
         df_all_metrics = pd.concat([df_all_metrics, metrics])
+    file_path = os.path.join(FCS_PATH, "cummulative_metrics.parquet")
+    df_all_metrics.to_parquet(file_path)
     metrics = list(get_metrics(df_fc_test["yhat"], df_fc_test["y"]).keys())
     # GERA GRÁFICOS
     for metric in metrics:
