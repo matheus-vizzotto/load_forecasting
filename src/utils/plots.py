@@ -72,3 +72,11 @@ def get_n_lags_plot(x: pd.DataFrame,
                     color_continuous_scale=px.colors.sequential.Aggrnyl,
                     template="plotly_dark")
     return plot
+
+def plot_metrics(data_: pd.DataFrame,
+                 x_: str,
+                 y_: str,
+                 hue_: str):
+    plot = px.line(data_, x=x_, y=y_, 
+                   color=hue_, template="plotly_dark")
+    return plot

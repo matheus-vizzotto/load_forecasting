@@ -1,14 +1,16 @@
 import streamlit as st
 from paths import PATHS
 from forecaster import load_data
-from utils.plots import get_n_lags_plot
+from utils.plots import get_n_lags_plot, plot_metrics
 import plotly.io as pio
+import os
 from utils.ts_wrangling import seasonal_decompose, get_acf_pacf
 import pandas as pd
 import plotly_express as px
 
 PROCESSED_DATA_DIR = PATHS['processed_data']
 LOGO_LINK = "https://www.pngmart.com/files/15/Energy-Symbol-Transparent-PNG.png"
+FORECASTS_DIR = PATHS["forecasts_data"]
 
 with st.sidebar:
     st.image(LOGO_LINK)
@@ -71,7 +73,13 @@ if choice=="Modelos":
     pass
 
 if choice=="Performance":
-    pass
+    st.title("Performance dos modelos")
+    st.subheader("Projeção fora de amostra")
+    df = pd.read_parquet(os.path.join(FORECASTS_DIR, "cummulative_metrics.parquet"))
+    metrics_opts = [x for x in df.columns if x not in ("model", "i")]
+    metric = st.selectbox('Selecione a métrica de avaliação', options=metrics_opts)
+    metrics_plot = plot_metrics(data_=df, x_="i", y_= metric, hue_="model")
+    st.plotly_chart(metrics_plot)
 
 if choice=="Projeções":
     pass
