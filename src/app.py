@@ -15,7 +15,7 @@ FORECASTS_DIR = PATHS["forecasts_data"]
 with st.sidebar:
     st.image(LOGO_LINK)
     st.title("Projeção de demanda elétrica")
-    choice = st.radio("Navegação", ["Dados", "Análise exploratória", "Modelos", "Performance", "Projeções"])
+    choice = st.radio("Navegação", ["Dados", "Análise exploratória", "Performance", "Projeções"])
     st.info("Aplicativo de projeção de demanda elétrica com modelos de aprendizado de máquina e modelos econométricos.")
 
 ts = load_data()
@@ -31,7 +31,7 @@ if choice=="Dados":
         pass
 
 if choice=="Análise exploratória":
-    st.title("Análise exploratória")
+    st.title("Análise exploratória :flashlight:")
     st.subheader(f"Período: {ts.data.index.min()} a {ts.data.index.max()}")
     level_plot = px.line(ts.data, y=["load_mwmed"], template="plotly_dark")
     level_plot.update_layout(title='Série em nível')
@@ -69,11 +69,11 @@ if choice=="Análise exploratória":
     lag_corr_plot = get_n_lags_plot(ts.data, y_col="load_mwmed", n_lags=y_lags, hue=ts.seasonal_components["dia_semana"])
     st.plotly_chart(lag_corr_plot)
 
-if choice=="Modelos":
-    pass
+# if choice=="Modelos":
+#     pass
 
 if choice=="Performance":
-    st.title("Performance dos modelos")
+    st.title("Performance dos modelos :medal:")
     st.subheader("Projeção fora de amostra")
     df = pd.read_parquet(os.path.join(FORECASTS_DIR, "cummulative_metrics.parquet"))
     metrics_opts = [x for x in df.columns if x not in ("model", "i")]
@@ -82,4 +82,4 @@ if choice=="Performance":
     st.plotly_chart(metrics_plot)
 
 if choice=="Projeções":
-    pass
+    st.title("Projeções :crystal_ball:")
