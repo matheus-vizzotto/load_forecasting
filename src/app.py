@@ -1,7 +1,10 @@
 import streamlit as st
 from paths import PATHS
 from forecaster import load_data
+from utils.plots import get_n_lags_plot
+import plotly.io as pio
 from utils.ts_wrangling import seasonal_decompose, get_acf_pacf
+import pandas as pd
 import plotly_express as px
 
 PROCESSED_DATA_DIR = PATHS['processed_data']
@@ -28,7 +31,7 @@ if choice=="Dados":
 if choice=="Análise exploratória":
     st.title("Análise exploratória")
     st.subheader(f"Período: {ts.data.index.min()} a {ts.data.index.max()}")
-    level_plot = px.line(ts.data, y=["load_mwmed"])
+    level_plot = px.line(ts.data, y=["load_mwmed"], template="plotly_dark")
     level_plot.update_layout(title='Série em nível')
     st.plotly_chart(level_plot)
     seasonal_data = ts.seasonal_components
@@ -60,6 +63,9 @@ if choice=="Análise exploratória":
     st.plotly_chart(acf_plot)
     pacf_plot = px.bar(df_autocorr_fun, x='Lag', y='PACF', title='Autocorrelation Function (ACF)')
     st.plotly_chart(pacf_plot)
+    y_lags = st.selectbox('Selecione o número de lags', options=[x for x in range(1,24*14)])
+    lag_corr_plot = get_n_lags_plot(ts.data, y_col="load_mwmed", n_lags=y_lags, hue=ts.seasonal_components["dia_semana"])
+    st.plotly_chart(lag_corr_plot)
 
 if choice=="Modelos":
     pass

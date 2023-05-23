@@ -3,8 +3,8 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly_express as px
 from typing import Optional
-
 
 def plot_ts(x_: pd.Series, 
             y_: pd.Series, 
@@ -59,3 +59,16 @@ def plot_with_confidence(data: pd.DataFrame,
     else:
         plt.show()
 
+def get_n_lags_plot(x: pd.DataFrame,
+                    y_col: str,
+                    n_lags: int,
+                    hue=None):
+    X = x.copy()
+    lag_str = f"y(t-{n_lags})"
+    X[lag_str] = X.loc[:,y_col].shift(n_lags)
+    #X.dropna(inplace=True)
+    plot = px.scatter(X, x=y_col, y=lag_str,
+                    color=hue, 
+                    color_continuous_scale=px.colors.sequential.Aggrnyl,
+                    template="plotly_dark")
+    return plot
