@@ -79,6 +79,12 @@ if choice=="Performance":
     oos_fcs_plot = px.line(df_oos_fcs, x="datetime", y="yhat", color="model")
     oos_fcs_plot.update_layout(hovermode="x")
     st.plotly_chart(oos_fcs_plot)
+    df_individual_forecasts = pd.read_parquet(os.path.join(FORECASTS_DIR, "fc_vs_test.parquet"))
+    models_names = df_individual_forecasts["model"].unique()
+    models_checkbox = st.selectbox('Selecione a métrica de avaliação', options=models_names)
+    df_individual_forecasts_checkbox = df_individual_forecasts[df_individual_forecasts["model"]==models_checkbox]
+    error_hist = px.histogram(df_individual_forecasts_checkbox, x="error", color="model", opacity=0.5)
+    st.plotly_chart(error_hist)
     df_cum_met = pd.read_parquet(os.path.join(FORECASTS_DIR, "cummulative_metrics.parquet"))
     metrics_opts = [x for x in df_cum_met.columns if x not in ("model", "i")]
     metric = st.selectbox('Selecione a métrica de avaliação', options=metrics_opts)

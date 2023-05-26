@@ -79,6 +79,8 @@ def run_evaluation():
     df_fc_test = pd.merge(df_oos_forecasts, ts.full_series, left_on="datetime", right_index=True, how="left")
     df_fc_test.rename(columns={"load_mwmed": "y"}, inplace=True)
     df_fc_test["error"] = df_fc_test["y"] - df_fc_test["yhat"]
+    file_path = os.path.join(FCS_PATH, "fc_vs_test.parquet")
+    df_fc_test.to_parquet(file_path)
     plt.figure(figsize=(15,5))
     sns.violinplot(data=df_fc_test, x="model", y="error")
     plt.title("Dispersão dos erros de previsão")
