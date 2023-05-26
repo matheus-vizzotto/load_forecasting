@@ -77,6 +77,9 @@ if choice=="Performance":
     st.subheader("Projeção fora de amostra")
     #df_oos_fcs = pd.read_excel(os.path.join(FORECASTS_DIR, "forecasts.xlsx"))
     df_oos_fcs = pd.read_parquet(os.path.join(FORECASTS_DIR, "fc_vs_test.parquet"))
+    oos_dates = df_oos_fcs["datetime"]
+    h_min, h_max, h = oos_dates.min(), oos_dates.max(), oos_dates.nunique()
+    st.write(f"De {h_min} a {h_max} (T = {h})")
     df_oos_test = df_oos_fcs[["datetime", "y"]].drop_duplicates()
     df_oos_test["model"] = "Observado"
     df_oos_test.rename(columns={"y": "yhat"}, inplace=True)
@@ -100,3 +103,7 @@ if choice=="Performance":
 
 if choice=="Projeções":
     st.title("Projeções :crystal_ball:")
+    df_final_forecasts = pd.read_excel(os.path.join(FORECASTS_DIR, "forecasts.xlsx"))
+    st.dataframe(df_final_forecasts)
+    final_forecasts_plot = px.line(df_final_forecasts, x="datetime", y="yhat", color="model")
+    st.plotly_chart(final_forecasts_plot)

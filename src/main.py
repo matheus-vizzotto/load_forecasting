@@ -9,6 +9,7 @@ from datetime import datetime
 
 FCS_PATH = PATHS["forecasts_data"]
 FORECASTS_DATA_DIR = PATHS['forecasts_data'] 
+FORECASTS_FIG_DIR = PATHS['forecasts_figs']
 
 # DOWNLOAD DATA
 #scraper.run_download()
@@ -22,7 +23,8 @@ for i in range(len(forecasts)):
     plt.plot(forecasts[i][1]["datetime"], forecasts[i][1]["yhat"], label=forecasts[i][0])
 plt.title("Projeção para os próximos dias")
 plt.legend()
-plt.show()
+plt.savefig(os.path.join(FORECASTS_FIG_DIR, "final_forecast.png"))
+
 # GENERATE forecasts.xlsx FILE
 df_forecasts = pd.DataFrame()
 for model in forecasts:
