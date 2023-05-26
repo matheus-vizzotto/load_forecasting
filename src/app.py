@@ -75,13 +75,19 @@ if choice=="Análise exploratória":
 if choice=="Performance":
     st.title("Performance dos modelos :medal:")
     st.subheader("Projeção fora de amostra")
-    df_oos_fcs = pd.read_excel(os.path.join(FORECASTS_DIR, "forecasts.xlsx"))
+    #df_oos_fcs = pd.read_excel(os.path.join(FORECASTS_DIR, "forecasts.xlsx"))
+    df_oos_fcs = pd.read_parquet(os.path.join(FORECASTS_DIR, "fc_vs_test.parquet"))
+    df_oos_test = df_oos_fcs[["datetime", "y"]].drop_duplicates()
+    df_oos_test["model"] = "Observado"
+    df_oos_test.rename(columns={"y": "yhat"}, inplace=True)
+    df_oos_fcs = pd.concat([df_oos_fcs, df_oos_test])
+    st.dataframe(df_oos_fcs)
     oos_fcs_plot = px.line(df_oos_fcs, x="datetime", y="yhat", color="model")
     oos_fcs_plot.update_layout(hovermode="x")
     st.plotly_chart(oos_fcs_plot)
     df_individual_forecasts = pd.read_parquet(os.path.join(FORECASTS_DIR, "fc_vs_test.parquet"))
     models_names = df_individual_forecasts["model"].unique()
-    models_checkbox = st.selectbox('Selecione a métrica de avaliação', options=models_names)
+    models_checkbox = st.selectbox('Selecione o modelo de previsão', options=models_names)
     df_individual_forecasts_checkbox = df_individual_forecasts[df_individual_forecasts["model"]==models_checkbox]
     error_hist = px.histogram(df_individual_forecasts_checkbox, x="error", color="model", opacity=0.5)
     st.plotly_chart(error_hist)
