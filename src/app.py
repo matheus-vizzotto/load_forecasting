@@ -75,10 +75,15 @@ if choice=="Análise exploratória":
 if choice=="Performance":
     st.title("Performance dos modelos :medal:")
     st.subheader("Projeção fora de amostra")
-    df = pd.read_parquet(os.path.join(FORECASTS_DIR, "cummulative_metrics.parquet"))
-    metrics_opts = [x for x in df.columns if x not in ("model", "i")]
+    df_oos_fcs = pd.read_excel(os.path.join(FORECASTS_DIR, "forecasts.xlsx"))
+    oos_fcs_plot = px.line(df_oos_fcs, x="datetime", y="yhat", color="model")
+    oos_fcs_plot.update_layout(hovermode="x")
+    st.plotly_chart(oos_fcs_plot)
+    df_cum_met = pd.read_parquet(os.path.join(FORECASTS_DIR, "cummulative_metrics.parquet"))
+    metrics_opts = [x for x in df_cum_met.columns if x not in ("model", "i")]
     metric = st.selectbox('Selecione a métrica de avaliação', options=metrics_opts)
-    metrics_plot = plot_metrics(data_=df, x_="i", y_= metric, hue_="model")
+    metrics_plot = plot_metrics(data_=df_cum_met, x_="i", y_= metric, hue_="model")
+    metrics_plot.update_layout(hovermode="x")
     st.plotly_chart(metrics_plot)
 
 if choice=="Projeções":
