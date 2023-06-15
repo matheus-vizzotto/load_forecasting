@@ -17,6 +17,8 @@ import os
 import warnings
 from pprint import pprint
 warnings.filterwarnings("ignore", category=FutureWarning)
+
+# CAMINHOS
 FCS_PATH = PATHS["forecasts_data"]
 MODELS_DIR = PATHS['models']
 FORECASTS_FIG_DIR = PATHS['forecasts_figs']

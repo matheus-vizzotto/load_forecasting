@@ -10,16 +10,6 @@ MODELS_INFO_PATH = os.path.join(LOGS_PATH, "models_info.log")
 TIMING_INFO_PATH = os.path.join(LOGS_PATH, "timing_info.log")
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
-# logging.basicConfig(level=logging.WARNING,
-#                     #filename='lab/matheus/notebooks/logs/data_info.log',
-#                     #filename='C:/Users/user/Projetos/load_forecasting/tests/matheus/notebooks/logs/data_info.log', # TODO: AJUSTAR PARA CAMINHO RELATIVO
-#                     filename=DATA_INFO_PATH, 
-#                     filemode='w',
-#                     format = '%(asctime)s - %(message)s')
-
-# logger = logging.getLogger(__name__)
-# logger.setLevel(logging.WARNING)
-
 def setup_logger(name, log_file, level=logging.INFO):
     """To setup as many loggers as you want"""
     handler = logging.FileHandler(log_file)        
