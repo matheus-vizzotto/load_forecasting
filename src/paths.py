@@ -3,7 +3,6 @@ import os
 
 # Define the root directory of your project
 ROOT_DIR = ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-#ROOT_DIR = "C:\\Users\\user\\Projetos\\load_forecasting\\src"
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
 EXTERNAL_DATA_DIR = os.path.join(DATA_DIR, "01_external")
 INTERIM_DATA_DIR = os.path.join(DATA_DIR, "02_interim")
